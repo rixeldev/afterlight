@@ -63,6 +63,7 @@ export function SettingsPanel() {
         closeLabel={t('common.close')}
         maxWidth={820}
       >
+        <View style={{ width: '100%', maxWidth: 760, alignSelf: 'center' }}>
         <Section title={t('settings.audio')} />
         {row(
           t('settings.music'),
@@ -181,6 +182,7 @@ export function SettingsPanel() {
         <AppText variant="micro" color={C.textMuted} align="center" style={{ marginTop: SP.md }}>
           {t('app.offline')}
         </AppText>
+        </View>
       </Sheet>
 
       <ConfirmDialog

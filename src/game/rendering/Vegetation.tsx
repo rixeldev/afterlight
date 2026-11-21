@@ -118,7 +118,7 @@ export function Vegetation({
   const rockParts = useModelParts('stylized_rock');
   const decor = useMemo(() => generateDecor(), []);
 
-  const { trees, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs } = useMemo(() => {
+  const { trees, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs, ao } = useMemo(() => {
     void revision;
     const engine = getEngine();
     const nodes = engine?.nodes ?? [];
@@ -128,6 +128,7 @@ export function Vegetation({
     const rockStumpItems: Xform[] = [];
     const bushItems: Xform[] = [];
     const fiberItems: Xform[] = [];
+    const aoItems: { x: number; z: number; y: number; r: number }[] = [];
 
     for (const node of nodes) {
       const state = engine?.state.nodes[node.id];
@@ -138,6 +139,7 @@ export function Vegetation({
         if (depleted) {
           stumpItems.push({ x: node.x, y, z: node.z, rot: node.rot, sx: 0.5 * node.scale, sy: 0.7, sz: 0.5 * node.scale });
         } else {
+          aoItems.push({ x: node.x, z: node.z, y, r: 1.55 * node.scale });
           treeItems.push({
             x: node.x,
             y,
@@ -160,10 +162,12 @@ export function Vegetation({
             sz: node.scale * 0.6,
           });
         } else {
+          aoItems.push({ x: node.x, z: node.z, y, r: 1.1 * node.scale });
           rockItems.push({ x: node.x, y: y - 0.1, z: node.z, rot: node.rot, sx: node.scale, sy: node.scale * 0.85, sz: node.scale });
         }
       } else if (node.kind === 'bush') {
         if (!depleted) {
+          aoItems.push({ x: node.x, z: node.z, y, r: 0.9 * node.scale });
           bushItems.push({ x: node.x, y, z: node.z, rot: node.rot, sx: node.scale, sy: node.scale, sz: node.scale });
         }
       } else if (node.kind === 'fiber') {
@@ -238,6 +242,7 @@ export function Vegetation({
       ferns: fernItems,
       pebbles: pebbleItems,
       logs: logItems,
+      ao: aoItems,
     };
   }, [revision, decor, quality]);
 
@@ -409,7 +414,74 @@ export function Vegetation({
           castShadow={shadows}
         />
       ) : null}
+
+      <GroundShadows items={ao} />
     </group>
+  );
+}
+
+function makeShadowTexture(): THREE.DataTexture {
+  const size = 64;
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = (x + 0.5) / size - 0.5;
+      const dy = (y + 0.5) / size - 0.5;
+      const d = Math.min(1, Math.hypot(dx, dy) * 2);
+      const alpha = Math.pow(1 - d, 2.4);
+      const i = (x + y * size) * 4;
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = Math.round(alpha * 255);
+    }
+  }
+  const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  texture.needsUpdate = true;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+/** Cheap baked contact shadows: one instanced draw call grounds the forest. */
+function GroundShadows({ items }: { items: { x: number; z: number; y: number; r: number }[] }) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), []);
+  const material = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: makeShadowTexture(),
+        transparent: true,
+        opacity: 0.42,
+        depthWrite: false,
+        color: '#06100C',
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+      }),
+    [],
+  );
+  useLayoutEffect(() => {
+    if (!mesh.current) return;
+    const dummy = new THREE.Object3D();
+    items.forEach((item, i) => {
+      dummy.position.set(item.x, item.y + 0.04, item.z);
+      dummy.scale.set(item.r * 2, 1, item.r * 2);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      mesh.current!.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.current.instanceMatrix.needsUpdate = true;
+    mesh.current.computeBoundingSphere();
+  }, [items]);
+  if (items.length === 0) return null;
+  return (
+    <instancedMesh
+      ref={mesh}
+      args={[geometry, material, items.length]}
+      count={items.length}
+      frustumCulled={false}
+      renderOrder={0}
+    />
   );
 }
 

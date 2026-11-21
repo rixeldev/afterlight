@@ -15,6 +15,7 @@ import { useSession } from '../../state/sessionStore';
 import { useSettings } from '../../state/settingsStore';
 import { audio } from '../../services/audio/audio';
 import { startSimulationLoop, stopSimulationLoop } from '../../game/runtime/SimulationLoop';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { C } from '../theme';
 
 /**
@@ -64,6 +65,20 @@ export function GameScreen() {
   return (
     <View style={styles.root}>
       <GameScene quality={quality} />
+      <Svg
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        width="100%"
+        height="100%"
+      >
+        <Defs>
+          <RadialGradient id="afterlight-vignette" cx="50%" cy="46%" r="78%">
+            <Stop offset="0.5" stopColor="#000000" stopOpacity="0" />
+            <Stop offset="1" stopColor="#000000" stopOpacity="0.42" />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#afterlight-vignette)" />
+      </Svg>
       <Hud />
       <InventoryPanel />
       <CraftingPanel />

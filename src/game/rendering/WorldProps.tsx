@@ -4,10 +4,14 @@ import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { terrainHeight } from '../world/terrain';
 import { STRUCTURES } from '../../data/recipes';
-import { loadModel } from './assets';
+import { getNormalMap, getTexture, loadModel } from './assets';
 import { FOOTBRIDGE, LOOKOUT, RANGER_CABIN, SILENT_GATE } from '../world/layout';
 
 const FIRE = '#FFB35C';
+
+const WOOD_TEX = { map: getTexture('weathered_wood_albedo', 2, 1.6), normalMap: getNormalMap('weathered_wood_albedo', 2, 1.8) };
+const BARK_TEX = { map: getTexture('bark_albedo', 1.6, 1.6), normalMap: getNormalMap('bark_albedo', 1.6, 2.2) };
+const STONE_TEX = { map: getTexture('stone_albedo', 2, 1.2), normalMap: getNormalMap('stone_albedo', 2, 2) };
 
 function Cabin({ shadows }: { shadows: boolean }) {
   const [scene, setScene] = useState<THREE.Group | null>(null);
@@ -38,7 +42,7 @@ function Cabin({ shadows }: { shadows: boolean }) {
         </mesh>
         <mesh position={[0, 2.6, 0]} rotation={[0, 0, 0]}>
           <coneGeometry args={[4.2, 1.8, 4]} />
-          <meshLambertMaterial color="#3E5142" />
+          <meshStandardMaterial {...WOOD_TEX} color="#9CB18C" roughness={1} />
         </mesh>
       </group>
     );
@@ -133,18 +137,18 @@ export function Footbridge({ shadows }: { shadows: boolean }) {
       {[-1, 1].map((side) => (
         <mesh key={side} position={[0, -0.12, side * 1.15]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.06, 0.06, 5.2, 5]} />
-          <meshLambertMaterial color="#4B3A28" />
+          <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
         </mesh>
       ))}
       {[-2.6, 0, 2.6].map((x, i) => (
         <group key={x} position={[x, 0, 0]}>
           <mesh position={[0, 0.55, -1.2]} castShadow={shadows}>
             <cylinderGeometry args={[0.07, 0.09, 1.6, 5]} />
-            <meshLambertMaterial color="#4B3A28" />
+            <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
           </mesh>
           <mesh position={[0, 0.55, 1.2]} castShadow={shadows}>
             <cylinderGeometry args={[0.07, 0.09, 1.6, 5]} />
-            <meshLambertMaterial color="#4B3A28" />
+            <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
           </mesh>
           {i < 2 ? (
             <mesh position={[1.3, 1.0, 0]} rotation={[0, 0, Math.PI / 2]}>
@@ -170,40 +174,40 @@ export function Lookout({ shadows }: { shadows: boolean }) {
       ].map(([x, z], i) => (
         <mesh key={i} position={[x * 0.72, 2.9, z * 0.72]} rotation={[z * 0.04, 0, -x * 0.04]} castShadow={shadows}>
           <boxGeometry args={[0.14, 5.9, 0.14]} />
-          <meshLambertMaterial color="#58462F" />
+          <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
         </mesh>
       ))}
       {[1.4, 3.2].map((h) => (
         <mesh key={h} position={[0, h, 0]} rotation={[0, 0, 0]}>
           <boxGeometry args={[2.1, 0.06, 0.06]} />
-          <meshLambertMaterial color="#4A3B29" />
+          <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
         </mesh>
       ))}
       <mesh position={[0, 5.9, 0]} castShadow={shadows} receiveShadow>
         <boxGeometry args={[2.9, 0.16, 2.9]} />
-        <meshLambertMaterial color="#6A5238" />
+        <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
       </mesh>
       <mesh position={[0, 6.6, -1.35]}>
         <boxGeometry args={[2.9, 0.55, 0.08]} />
-        <meshLambertMaterial color="#5C4830" />
+        <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
       </mesh>
       <mesh position={[0, 6.6, 1.35]}>
         <boxGeometry args={[2.9, 0.55, 0.08]} />
-        <meshLambertMaterial color="#5C4830" />
+        <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
       </mesh>
       <mesh position={[-1.35, 6.6, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[2.9, 0.55, 0.08]} />
-        <meshLambertMaterial color="#5C4830" />
+        <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
       </mesh>
       {/* Broken roof beam */}
       <mesh position={[0.6, 7.2, 0]} rotation={[0, 0, 0.35]}>
         <boxGeometry args={[2.6, 0.1, 0.1]} />
-        <meshLambertMaterial color="#4A3B29" />
+        <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
       </mesh>
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <mesh key={`ladder-${i}`} position={[1.55, 0.5 + i * 0.85, 0]} rotation={[0, 0, 0]}>
           <boxGeometry args={[0.5, 0.06, 0.08]} />
-          <meshLambertMaterial color="#5C4830" />
+          <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
         </mesh>
       ))}
     </group>
@@ -264,7 +268,7 @@ export function StarterCamp({ shadows }: { shadows: boolean }) {
           return (
             <mesh key={i} position={[Math.cos(a) * 0.95, 0.12, Math.sin(a) * 0.95]} rotation={[0.2, a, 0]}>
               <dodecahedronGeometry args={[0.26, 0]} />
-              <meshLambertMaterial color="#6B6C62" />
+              <meshStandardMaterial {...STONE_TEX} color="#DFE1D4" roughness={1} />
             </mesh>
           );
         })}
@@ -282,7 +286,7 @@ export function StarterCamp({ shadows }: { shadows: boolean }) {
         {[0, 2.1, 4.2].map((a) => (
           <mesh key={a} position={[Math.cos(a) * 0.45, 0.8, Math.sin(a) * 0.45]} rotation={[Math.sin(a) * 0.16, 0, -Math.cos(a) * 0.16]}>
             <cylinderGeometry args={[0.035, 0.045, 1.7, 4]} />
-            <meshLambertMaterial color="#4A3B29" />
+            <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
           </mesh>
         ))}
         <mesh position={[0, 1.55, 0]}>
@@ -298,7 +302,7 @@ export function StarterCamp({ shadows }: { shadows: boolean }) {
       <group position={[-3.6, terrainHeight(-3.6, -1.2), -1.2]} rotation={[0, 0.3, 0]}>
         <mesh position={[0, 0.9, 0]}>
           <boxGeometry args={[0.12, 1.8, 0.12]} />
-          <meshLambertMaterial color="#5A4632" />
+          <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
         </mesh>
         <mesh position={[0.28, 1.45, 0]} rotation={[0, 0, -0.04]}>
           <boxGeometry args={[0.72, 0.3, 0.05]} />
@@ -310,7 +314,7 @@ export function StarterCamp({ shadows }: { shadows: boolean }) {
         {[0, 1, 2].map((i) => (
           <mesh key={i} position={[0, 0.12 + (i % 2) * 0.2, (i - 1) * 0.2]} rotation={[0, 0.2 * i, Math.PI / 2]}>
             <cylinderGeometry args={[0.1, 0.1, 1.0, 5]} />
-            <meshLambertMaterial color="#4B3A28" />
+            <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
           </mesh>
         ))}
       </group>
@@ -347,14 +351,14 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
             return (
               <mesh key={i} position={[Math.cos(a) * 0.9, 0.11, Math.sin(a) * 0.9]} rotation={[0.2, a, 0]} castShadow>
                 <dodecahedronGeometry args={[0.24, 0]} />
-                <meshLambertMaterial color="#737568" />
+                <meshStandardMaterial {...STONE_TEX} color="#DFE1D4" roughness={1} />
               </mesh>
             );
           })}
           {[0, 1, 2].map((i) => (
             <mesh key={i} position={[0, 0.14, 0]} rotation={[0.35, (i / 3) * Math.PI, 0]}>
               <cylinderGeometry args={[0.12, 0.15, 1.1, 6]} />
-              <meshLambertMaterial color="#3F2F21" />
+              <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
             </mesh>
           ))}
           <mesh ref={flame} position={[0, 0.5, 0]}>
@@ -373,7 +377,7 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
         <group position={[structure.x, y, structure.z]} rotation={[0, structure.rot * Math.PI * 0.5, 0]}>
           <mesh position={[0, 0.85, 0]} castShadow>
             <boxGeometry args={[1.9, 0.12, 1.0]} />
-            <meshLambertMaterial color="#6A5238" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           {[
             [-0.8, -0.38],
@@ -383,7 +387,7 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
           ].map(([x, z], i) => (
             <mesh key={i} position={[x, 0.42, z]}>
               <boxGeometry args={[0.1, 0.85, 0.1]} />
-              <meshLambertMaterial color="#4B3A28" />
+              <meshStandardMaterial {...BARK_TEX} color="#D8B08A" roughness={0.95} />
             </mesh>
           ))}
           <mesh position={[0.45, 0.99, 0.15]} rotation={[0, 0.4, 0]}>
@@ -405,7 +409,7 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
         <group position={[structure.x, y, structure.z]} rotation={[0, structure.rot * Math.PI * 0.5, 0]}>
           <mesh position={[0, 0.45, 0]} castShadow>
             <boxGeometry args={[1.2, 0.9, 0.9]} />
-            <meshLambertMaterial color="#6A5238" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           <mesh position={[0, 0.45, 0]}>
             <boxGeometry args={[1.22, 0.1, 0.92]} />
@@ -413,7 +417,7 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
           </mesh>
           <mesh position={[0, 0.9, 0]}>
             <boxGeometry args={[1.05, 0.08, 0.8]} />
-            <meshLambertMaterial color="#7C6344" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
         </group>
       );
@@ -422,23 +426,23 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
         <group position={[structure.x, y, structure.z]} rotation={[0, structure.rot * Math.PI * 0.5, 0]}>
           <mesh position={[-1.9, 1.1, 0]} rotation={[0, 0, -0.04]} castShadow>
             <boxGeometry args={[0.16, 2.6, 0.16]} />
-            <meshLambertMaterial color="#58462F" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           <mesh position={[1.9, 1.1, 0]} castShadow>
             <boxGeometry args={[0.16, 2.6, 0.16]} />
-            <meshLambertMaterial color="#58462F" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           <mesh position={[0, 2.0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
             <boxGeometry args={[0.14, 4.0, 0.14]} />
-            <meshLambertMaterial color="#58462F" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           <mesh position={[0, 1.55, -1.25]} rotation={[0.62, 0, 0]} castShadow>
             <boxGeometry args={[4.3, 0.1, 3.1]} />
-            <meshLambertMaterial color="#3E5142" />
+            <meshStandardMaterial {...WOOD_TEX} color="#9CB18C" roughness={1} />
           </mesh>
           <mesh position={[0, 1.55, 1.25]} rotation={[-0.62, 0, 0]} castShadow>
             <boxGeometry args={[4.3, 0.1, 3.1]} />
-            <meshLambertMaterial color="#445847" />
+            <meshStandardMaterial {...WOOD_TEX} color="#9CB18C" roughness={1} />
           </mesh>
           <mesh position={[0, 0.28, 0]} rotation={[0, 0, 0]}>
             <cylinderGeometry args={[0.75, 0.75, 0.16, 10]} />
@@ -456,7 +460,7 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
         <group position={[structure.x, y, structure.z]} rotation={[0, structure.rot * Math.PI * 0.5, 0]}>
           <mesh position={[0, 0.6, 0]} castShadow>
             <cylinderGeometry args={[0.6, 0.52, 1.2, 10]} />
-            <meshLambertMaterial color="#5C4830" />
+            <meshStandardMaterial {...WOOD_TEX} color="#D9B78E" roughness={0.9} />
           </mesh>
           <mesh position={[0, 0.62, 0]}>
             <cylinderGeometry args={[0.5, 0.5, 0.95, 10]} />

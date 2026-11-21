@@ -224,6 +224,23 @@ function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boole
       <View style={styles.questBar}>
         <View style={[styles.questFill, { width: `${(done / total) * 100}%` }]} />
       </View>
+      {snapshot.goal ? (
+        <>
+          <View style={styles.goalDivider} />
+          <View style={styles.goalRow}>
+            <Icon name="target" size={12} color={C.accent} />
+            <AppText variant="micro" color={C.textMuted} style={{ width: 60 }}>
+              {t('hud.next_goal')}
+            </AppText>
+            <AppText variant="caption" color={C.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
+              {t(snapshot.goal.titleKey)}
+            </AppText>
+            <AppText variant="micro" color={C.accent}>
+              {snapshot.goal.current}/{snapshot.goal.target}
+            </AppText>
+          </View>
+        </>
+      ) : null}
     </Pressable>
   );
 }
@@ -437,6 +454,8 @@ const styles = StyleSheet.create({
   questDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.accent },
   questBar: { height: 3, borderRadius: 2, backgroundColor: 'rgba(233,240,226,0.12)', marginTop: 4, overflow: 'hidden' },
   questFill: { height: 3, backgroundColor: C.accent, borderRadius: 2 },
+  goalDivider: { height: 1, backgroundColor: C.border, marginTop: 5 },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
   compass: {
     width: 124,
     height: 40,

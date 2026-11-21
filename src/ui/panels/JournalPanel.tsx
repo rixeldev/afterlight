@@ -6,6 +6,7 @@ import { useItemName } from '../components/ItemIcon';
 import { useT } from '../../state/settingsStore';
 import { useSession } from '../../state/sessionStore';
 import { QUEST_STEPS, questStep } from '../../data/quests';
+import { GOALS, isGoalDone } from '../../data/goals';
 import { STORY } from '../../data/world';
 
 export function JournalPanel() {
@@ -114,6 +115,56 @@ export function JournalPanel() {
               </AppText>
             </View>
           )}
+
+          <View style={styles.card}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <AppText variant="micro" color={C.accent}>
+                {t('journal.goals')}
+              </AppText>
+              {snapshot.goal ? (
+                <AppText variant="micro" color={C.textMuted}>
+                  {snapshot.goal.current}/{snapshot.goal.target}
+                </AppText>
+              ) : null}
+            </View>
+            <AppText variant="caption" color={C.textMuted} style={{ marginTop: 3 }}>
+              {snapshot.goal ? t(snapshot.goal.descKey) : t('journal.goal_all')}
+            </AppText>
+            <View style={styles.goalGrid}>
+              {GOALS.map((goal, index) => {
+                const done = isGoalDone({ flags: snapshot.flags }, goal);
+                const active = snapshot.goal?.id === goal.id;
+                return (
+                  <View key={goal.id} style={[styles.goalItem, active ? styles.goalItemActive : null]}>
+                    <View
+                      style={[
+                        styles.goalDot,
+                        done ? { backgroundColor: C.success, borderColor: C.success } : null,
+                        active ? { borderColor: C.accent } : null,
+                      ]}
+                    >
+                      {done ? (
+                        <Icon name="check" size={9} color={C.ink} />
+                      ) : (
+                        <AppText variant="micro" color={active ? C.accent : C.textMuted} style={{ fontSize: 8 }}>
+                          {index + 1}
+                        </AppText>
+                      )}
+                    </View>
+                    <AppText
+                      variant="caption"
+                      color={done ? C.textMuted : active ? C.text : C.textMuted}
+                      numberOfLines={1}
+                      style={{ flex: 1 }}
+                    >
+                      {t(goal.titleKey)}
+                    </AppText>
+                    {active ? <Chip label={`${snapshot.goal?.current ?? 0}/${snapshot.goal?.target ?? 1}`} selected /> : null}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
 
           <View style={styles.card}>
             <AppText variant="micro" color={C.textMuted}>
@@ -236,6 +287,28 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   rewards: { marginTop: SP.md, paddingTop: SP.sm, borderTopWidth: 1, borderTopColor: C.border },
+  goalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 },
+  goalItem: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: R.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  goalItemActive: { borderColor: C.accentLine, backgroundColor: C.accentDim },
+  goalDot: {
+    width: 17,
+    height: 17,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
   stepDot: {
     width: 18,

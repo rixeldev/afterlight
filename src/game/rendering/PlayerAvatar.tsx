@@ -54,22 +54,42 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
     phase.current += delta * (2.6 + speed * 7.2);
     grounded.current += delta;
 
-    const swing = Math.sin(phase.current) * 0.55 * speed;
-    if (leftLeg.current) leftLeg.current.rotation.x = swing;
-    if (rightLeg.current) rightLeg.current.rotation.x = -swing;
-    if (leftArm.current) leftArm.current.rotation.x = -swing * 0.7;
-    if (rightArm.current) {
-      const attack = engine.runtime.attackFlash;
-      rightArm.current.rotation.x = swing * 0.5 - attack * 1.9;
-      rightArm.current.rotation.z = -attack * 0.35;
-    }
-    if (body.current) {
-      body.current.position.y = Math.abs(Math.sin(phase.current)) * 0.035 * speed;
-      body.current.rotation.x = speed * 0.05;
-    }
-    // Idle breathing.
-    if (body.current && speed < 0.02) {
-      body.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.008;
+    const action = engine.getActionInfo();
+    const attack = engine.runtime.attackFlash;
+
+    if (action) {
+      const p = action.progress;
+      const swing = Math.sin(Math.min(1, p) * Math.PI);
+      const chopping = action.kind === 'tree' || action.kind === 'rock' || action.kind === 'crate' || action.kind === 'cache';
+      if (leftLeg.current) leftLeg.current.rotation.x = 0.08;
+      if (rightLeg.current) rightLeg.current.rotation.x = -0.08;
+      if (leftArm.current) leftArm.current.rotation.x = -0.35 - swing * 0.35;
+      if (rightArm.current) {
+        rightArm.current.rotation.x = chopping ? -0.15 - swing * 2.1 : -0.55 - swing * 1.15;
+        rightArm.current.rotation.z = chopping ? -0.18 : -0.05;
+      }
+      if (body.current) {
+        body.current.rotation.x = chopping ? 0.08 + swing * 0.16 : 0.26 + swing * 0.2;
+        body.current.position.y = chopping ? 0 : -0.16 * swing;
+        body.current.position.z = chopping ? 0.08 * swing : 0.04 * swing;
+      }
+    } else {
+      const swing = Math.sin(phase.current) * 0.55 * speed;
+      if (leftLeg.current) leftLeg.current.rotation.x = swing;
+      if (rightLeg.current) rightLeg.current.rotation.x = -swing;
+      if (leftArm.current) leftArm.current.rotation.x = -swing * 0.7;
+      if (rightArm.current) {
+        rightArm.current.rotation.x = swing * 0.5 - attack * 1.9;
+        rightArm.current.rotation.z = -attack * 0.35;
+      }
+      if (body.current) {
+        body.current.position.y = Math.abs(Math.sin(phase.current)) * 0.035 * speed;
+        body.current.position.z = 0;
+        body.current.rotation.x = speed * 0.05;
+      }
+      if (body.current && speed < 0.02) {
+        body.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.008;
+      }
     }
 
     const equipped = engine.state.player.equipped;

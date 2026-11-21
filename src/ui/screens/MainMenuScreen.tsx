@@ -52,7 +52,7 @@ export function MainMenuScreen() {
   }, [fade, rise, fog, reducedMotion]);
 
 
-  const compact = height < 420 || width < 760;
+  const compact = height < 380 || width < 700;
 
   const start = async (mode: 'new' | 'continue') => {
     if (busy) return;

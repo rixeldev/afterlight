@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { C, FONT, R } from '../theme';
 import { Icon } from '../components/Icon';
@@ -36,18 +37,37 @@ export function CameraDragLayer() {
   return <View style={StyleSheet.absoluteFill} {...responder.panHandlers} />;
 }
 
-const JOY_SIZE = 118;
-const KNOB = 52;
+const JOY_ZONE_HEIGHT = 292;
+const JOY_BASE = 118;
+const JOY_KNOB = 52;
+const JOY_MAX = 46;
 
+/**
+ * Floating movement stick: the ring appears wherever the thumb lands inside the
+ * generous bottom-left movement zone, so the player never has to find a small
+ * fixed circle mid-action. This is the single biggest feel fix for touch play.
+ */
 export function Joystick({ leftHanded }: { leftHanded: boolean }) {
-  const knob = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const { width } = useWindowDimensions();
+  const zoneWidth = Math.max(240, Math.min(330, width * 0.38));
+  const home = useRef({ x: 16 + JOY_BASE / 2, y: JOY_ZONE_HEIGHT - 16 - JOY_BASE / 2 });
+  const originRef = useRef(home.current);
+  const [origin, setOrigin] = useState(home.current);
   const [active, setActive] = useState(false);
-  const max = (JOY_SIZE - KNOB) / 2;
+  const knob = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const zoneRef = useRef({ width: zoneWidth });
 
   const reset = useCallback(() => {
     setMove(0, 0);
     setActive(false);
-    Animated.spring(knob, { toValue: { x: 0, y: 0 }, useNativeDriver: false, speed: 28, bounciness: 6 }).start();
+    originRef.current = home.current;
+    setOrigin(home.current);
+    Animated.spring(knob, {
+      toValue: { x: 0, y: 0 },
+      useNativeDriver: false,
+      speed: 26,
+      bounciness: 5,
+    }).start();
   }, [knob]);
 
   const responder = useMemo(
@@ -55,43 +75,69 @@ export function Joystick({ leftHanded }: { leftHanded: boolean }) {
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => setActive(true),
+        onPanResponderGrant: (e) => {
+          const maxX = zoneRef.current.width - JOY_BASE / 2 - 8;
+          const x = Math.max(JOY_BASE / 2 + 8, Math.min(maxX, e.nativeEvent.locationX));
+          const y = Math.max(JOY_BASE / 2 + 8, Math.min(JOY_ZONE_HEIGHT - JOY_BASE / 2 - 8, e.nativeEvent.locationY));
+          originRef.current = { x, y };
+          setOrigin({ x, y });
+          setActive(true);
+          knob.setValue({ x: 0, y: 0 });
+          setMove(0, 0);
+        },
         onPanResponderMove: (_, g) => {
           const len = Math.hypot(g.dx, g.dy);
-          const clamped = len > max ? max / len : 1;
-          const x = g.dx * clamped;
-          const y = g.dy * clamped;
+          const clamp = len > JOY_MAX ? JOY_MAX / len : 1;
+          const x = g.dx * clamp;
+          const y = g.dy * clamp;
           knob.setValue({ x, y });
-          setMove(x / max, -y / max);
+          setMove(x / JOY_MAX, -y / JOY_MAX);
         },
         onPanResponderRelease: reset,
         onPanResponderTerminate: reset,
         onPanResponderTerminationRequest: () => false,
       }),
-    [knob, max, reset],
+    [knob, reset],
   );
 
   return (
     <View
       style={[
-        styles.joyWrap,
-        leftHanded ? { left: undefined, right: 18 } : { left: 18 },
+        styles.joyZone,
+        { width: zoneWidth },
+        leftHanded ? { right: 0, left: undefined } : { left: 0 },
       ]}
+      onLayout={(e) => {
+        zoneRef.current.width = e.nativeEvent.layout.width;
+      }}
       {...responder.panHandlers}
       accessibilityLabel="Movement joystick"
     >
-      <View style={[styles.joyRing, active ? { borderColor: C.accentLine, backgroundColor: 'rgba(232,201,143,0.08)' } : null]}>
+      <View
+        style={[
+          styles.joyRing,
+          {
+            left: origin.x - JOY_BASE / 2,
+            top: origin.y - JOY_BASE / 2,
+            opacity: active ? 1 : 0.62,
+            borderColor: active ? C.accentLine : 'rgba(233,240,226,0.18)',
+            backgroundColor: active ? 'rgba(232,201,143,0.06)' : 'rgba(6,14,12,0.22)',
+          },
+        ]}
+      >
         <View style={styles.joyCardinal}>
-          <Icon name="chevron_down" size={12} color="rgba(233,240,226,0.25)" />
+          <Icon name="chevron_down" size={12} color="rgba(233,240,226,0.28)" />
         </View>
       </View>
       <Animated.View
         style={[
           styles.joyKnob,
           {
+            left: origin.x - JOY_KNOB / 2,
+            top: origin.y - JOY_KNOB / 2,
             transform: [{ translateX: knob.x }, { translateY: knob.y }],
-            backgroundColor: active ? 'rgba(232,201,143,0.32)' : 'rgba(233,240,226,0.13)',
-            borderColor: active ? C.accent : 'rgba(233,240,226,0.22)',
+            backgroundColor: active ? 'rgba(232,201,143,0.4)' : 'rgba(233,240,226,0.16)',
+            borderColor: active ? C.accent : 'rgba(233,240,226,0.26)',
           },
         ]}
       >
@@ -532,30 +578,26 @@ export function BuildControls() {
 }
 
 const styles = StyleSheet.create({
-  joyWrap: {
+  joyZone: {
     position: 'absolute',
-    bottom: 16,
-    width: JOY_SIZE + 24,
-    height: JOY_SIZE + 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    bottom: 0,
+    height: JOY_ZONE_HEIGHT,
   },
   joyRing: {
-    width: JOY_SIZE,
-    height: JOY_SIZE,
-    borderRadius: JOY_SIZE / 2,
+    position: 'absolute',
+    width: JOY_BASE,
+    height: JOY_BASE,
+    borderRadius: JOY_BASE / 2,
     borderWidth: 1.4,
-    borderColor: 'rgba(233,240,226,0.16)',
-    backgroundColor: 'rgba(6,14,12,0.28)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   joyCardinal: { position: 'absolute', top: 6 },
   joyKnob: {
     position: 'absolute',
-    width: KNOB,
-    height: KNOB,
-    borderRadius: KNOB / 2,
+    width: JOY_KNOB,
+    height: JOY_KNOB,
+    borderRadius: JOY_KNOB / 2,
     borderWidth: 1.4,
     alignItems: 'center',
     justifyContent: 'center',

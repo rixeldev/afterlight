@@ -389,6 +389,7 @@ export function Slider({
   max = 1,
   label,
   format,
+  width = 220,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -396,21 +397,21 @@ export function Slider({
   max?: number;
   label: string;
   format?: (v: number) => string;
+  width?: number;
 }) {
-  const [width, setWidth] = useState(0);
-  const widthRef = useRef(0);
+  const [trackWidth, setTrackWidth] = useState(width);
+  const widthRef = useRef(width);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-  const pct = (value - min) / (max - min);
-  const update = useCallback(
-    (x: number) => {
-      const w = widthRef.current;
-      if (w <= 0) return;
-      const p = Math.max(0, Math.min(1, x / w));
-      onChangeRef.current(min + p * (max - min));
-    },
-    [min, max],
-  );
+  const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
+
+  const update = useCallback((x: number) => {
+    const w = widthRef.current;
+    if (w <= 0) return;
+    const p = Math.max(0, Math.min(1, x / w));
+    onChangeRef.current(min + p * (max - min));
+  }, [min, max]);
+
   const responder = useMemo(
     () =>
       PanResponder.create({
@@ -418,32 +419,37 @@ export function Slider({
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: (e) => update(e.nativeEvent.locationX),
         onPanResponderMove: (e) => update(e.nativeEvent.locationX),
+        onPanResponderTerminationRequest: () => false,
       }),
     [update],
   );
+
+  const knobSize = 22;
+  const knobLeft = Math.max(0, Math.min(trackWidth - knobSize, pct * trackWidth - knobSize / 2));
+
   return (
-    <View
-      style={styles.sliderWrap}
-      onLayout={(e) => {
-        widthRef.current = e.nativeEvent.layout.width;
-        setWidth(e.nativeEvent.layout.width);
-      }}
-      {...responder.panHandlers}
-      accessibilityRole="adjustable"
-      accessibilityLabel={label}
-      accessibilityValue={{ min, max, now: value }}
-    >
-      <View style={styles.sliderTrack}>
-        <View style={[styles.sliderFill, { width: `${pct * 100}%` }]} />
-      </View>
-      <View style={[styles.sliderKnob, { left: Math.max(0, Math.min(width - 20, pct * width - 10)) }]} />
-      {format ? (
-        <View style={styles.sliderValue}>
-          <AppText variant="caption" color={C.textSecondary}>
-            {format(value)}
-          </AppText>
+    <View style={styles.sliderContainer}>
+      <View
+        style={[styles.sliderTrackArea, { width }]}
+        onLayout={(e) => {
+          widthRef.current = e.nativeEvent.layout.width;
+          setTrackWidth(e.nativeEvent.layout.width);
+        }}
+        {...responder.panHandlers}
+        accessibilityRole="adjustable"
+        accessibilityLabel={label}
+        accessibilityValue={{ min, max, now: value }}
+      >
+        <View style={styles.sliderTrack}>
+          <View style={[styles.sliderFill, { width: `${pct * 100}%` }]} />
         </View>
-      ) : null}
+        <View style={[styles.sliderKnob, { width: knobSize, height: knobSize, borderRadius: knobSize / 2, left: knobLeft }]} />
+      </View>
+      <View style={styles.sliderValue}>
+        <AppText variant="label" color={C.textSecondary}>
+          {format ? format(value) : Math.round(pct * 100).toString()}
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -628,20 +634,20 @@ const styles = StyleSheet.create({
   toggleRow: { paddingVertical: 4 },
   toggleTrack: { width: 44, height: 26, borderRadius: 13, borderWidth: 1, padding: 3, justifyContent: 'center' },
   toggleKnob: { width: 18, height: 18, borderRadius: 9 },
-  sliderWrap: { height: 44, justifyContent: 'center', paddingRight: 52 },
+  sliderContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sliderTrackArea: { height: 42, justifyContent: 'center' },
   sliderTrack: { height: 6, borderRadius: 3, backgroundColor: 'rgba(233,240,226,0.12)', overflow: 'hidden' },
   sliderFill: { height: '100%', backgroundColor: C.accent, borderRadius: 3 },
   sliderKnob: {
     position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: C.accent,
     borderWidth: 3,
     borderColor: C.bgAlt,
-    top: 12,
   },
-  sliderValue: { position: 'absolute', right: 0, top: 12, width: 44, alignItems: 'flex-end' },
+  sliderValue: { minWidth: 48, alignItems: 'flex-end' },
   segmented: {
     flexDirection: 'row',
     backgroundColor: 'rgba(233,240,226,0.07)',

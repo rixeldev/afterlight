@@ -16,6 +16,7 @@ import { ITEMS, itemDef } from '../../data/items';
 import { RECIPES, STRUCTURES } from '../../data/recipes';
 import { POIS, REGION, storyEntry } from '../../data/world';
 import { questStep } from '../../data/quests';
+import { goalFlag, nextGoal } from '../../data/goals';
 import {
   addItem,
   cloneInventory,
@@ -119,6 +120,7 @@ export interface GameSnapshot {
   storageSlots: number;
   structures: StructureInstance[];
   quest: QuestSave;
+  goal: { id: string; titleKey: string; descKey: string; current: number; target: number } | null;
   discoveries: string[];
   story: string[];
   tutorial: GameSave['tutorial'];
@@ -158,8 +160,16 @@ interface GatherAction {
   repeat: boolean;
 }
 
+interface Impact {
+  x: number;
+  z: number;
+  kind: HarvestNode['kind'] | 'build' | 'hit';
+  at: number;
+}
+
 interface Runtime {
   threat: ThreatRuntime | null;
+  impact: Impact | null;
   defeatedOnDay: number;
   gather: GatherAction | null;
   heldInteract: boolean;
@@ -179,6 +189,7 @@ interface Runtime {
   lastSnapshotVersion: number;
   interactCooldownUntil: number;
   nodeRevision: number;
+  goalTimer: number;
 }
 
 const GATHER_DURATION: Record<HarvestNode['kind'], { base: number; tool: number; sfx: string; label: string }> = {
@@ -293,6 +304,7 @@ export class GameEngine {
     }
     this.runtime = {
       threat: null,
+      impact: null,
       defeatedOnDay: 0,
       gather: null,
       heldInteract: false,
@@ -312,6 +324,7 @@ export class GameEngine {
       lastSnapshotVersion: 0,
       interactCooldownUntil: 0,
       nodeRevision: 0,
+      goalTimer: 3,
     };
   }
 
@@ -357,6 +370,23 @@ export class GameEngine {
 
   getThreat(): ThreatRuntime | null {
     return this.runtime.threat;
+  }
+
+  getImpact(): Impact | null {
+    return this.runtime.impact;
+  }
+
+  /** Pose data for the avatar while a hold-to-gather action is running. */
+  getActionInfo(): { kind: HarvestNode['kind']; progress: number; labelKey: string } | null {
+    const action = this.runtime.gather;
+    if (!action) return null;
+    const node = this.nodes.find((n) => n.id === action.nodeId);
+    if (!node) return null;
+    return {
+      kind: node.kind,
+      progress: Math.max(0, Math.min(1, action.elapsed / action.duration)),
+      labelKey: action.labelKey,
+    };
   }
 
   getBuildGhost(): BuildGhost | null {
@@ -541,6 +571,7 @@ export class GameEngine {
     this.updateDiscoveries();
     this.updateThreat(dt);
     this.updateQuestPassive();
+    this.updateGoals(dt);
     this.recomputeInteraction();
     this.updateGather(dt, input);
     this.updateAutosave(dt);
@@ -550,17 +581,21 @@ export class GameEngine {
 
   private updateMovement(dt: number, input: TickInput) {
     const p = this.state.player;
-    const mag = Math.hypot(input.moveX, input.moveY);
-    const sprinting =
-      input.sprint &&
-      mag > 0.45 &&
-      p.stamina > SPRINT_STAMINA_MIN &&
-      !this.runtime.gather;
-    let speed = mag > 0.62 ? RUN_SPEED : WALK_SPEED;
-    if (sprinting) speed = SPRINT_SPEED;
-    if (!sprinting && mag < 0.62) speed = WALK_SPEED * Math.max(0.55, mag);
 
-    if (mag > 0.08) {
+    // If a structure was placed on top of us (or a save is old), step out first.
+    if (!this.isPositionFree(p.x, p.z)) {
+      const push = this.nearestObstaclePush(p.x, p.z);
+      if (push && this.isPositionFree(p.x + push.x, p.z + push.z)) {
+        p.x += push.x;
+        p.z += push.z;
+      }
+    }
+
+    const mag = Math.hypot(input.moveX, input.moveY);
+    const deadZone = 0.12;
+    const analog = mag <= deadZone ? 0 : Math.min(1, (mag - deadZone) / (1 - deadZone));
+
+    if (analog > 0.02) {
       const fwdX = -Math.sin(input.cameraYaw);
       const fwdZ = -Math.cos(input.cameraYaw);
       const rightX = Math.cos(input.cameraYaw);
@@ -571,37 +606,33 @@ export class GameEngine {
       dirX /= len;
       dirZ /= len;
 
+      const sprinting =
+        input.sprint &&
+        analog > 0.55 &&
+        p.stamina > SPRINT_STAMINA_MIN &&
+        !this.runtime.gather;
+      let speed = WALK_SPEED + (RUN_SPEED - WALK_SPEED) * analog;
+      if (sprinting) speed = SPRINT_SPEED * (0.75 + 0.25 * analog);
       const slope = terrainSlope(p.x, p.z, 0.8);
       if (slope > 0.9) speed *= 0.62;
-      if (isUnderwater(p.x, p.z)) speed *= 0.52;
+      if (isUnderwater(p.x, p.z)) speed *= 0.55;
 
-      const step = speed * dt * Math.min(1, mag);
-      let nx = p.x + dirX * step;
-      let nz = p.z + dirZ * step;
-      if (terrainHeight(nx, nz) < WATER_LEVEL - 0.55) {
-        nx = p.x;
-        nz = p.z;
-        this.toast('warn', 'toast.deep_water');
-      }
-      const resolved = this.resolveCollisions(nx, nz);
-      const worldDist = Math.hypot(resolved.x - p.x, resolved.z - p.z);
-      if (worldDist > 0) {
-        p.x = resolved.x;
-        p.z = resolved.z;
-        this.state.stats.distanceTravelled += worldDist;
-        this.advanceQuest('travel', undefined, worldDist);
-      }
-      const targetFacing = Math.atan2(dirX, -dirZ);
-      p.facing = lerpAngle(p.facing, targetFacing, Math.min(1, dt * 11));
-      // Step audio is driven by distance, not wall-clock, to stay in sync.
-      if (worldDist > 0.02) {
-        this.runtime.gatherSfxTimer -= worldDist;
+      const moved = this.moveWithCollisions(p.x, p.z, dirX * speed * dt, dirZ * speed * dt);
+      if (moved.distance > 0.0001) {
+        p.x = moved.x;
+        p.z = moved.z;
+        this.state.stats.distanceTravelled += moved.distance;
+        this.advanceQuest('travel', undefined, moved.distance);
+        p.facing = lerpAngle(p.facing, Math.atan2(dirX, -dirZ), Math.min(1, dt * 14));
+        this.runtime.gatherSfxTimer -= moved.distance;
         if (this.runtime.gatherSfxTimer <= 0) {
           this.runtime.gatherSfxTimer = 1.65;
           this.sfx(SFX.footstep, isUnderwater(p.x, p.z) ? 0.4 : 0.32);
         }
       }
     }
+
+    if (this.runtime.gather && analog > 0.2) this.cancelGather();
 
     const distCamp = DIST(p.x, p.z, REGION.camp.x, REGION.camp.z);
     if (distCamp > REGION.playRadius) {
@@ -610,32 +641,81 @@ export class GameEngine {
       p.z = REGION.camp.z + (p.z - REGION.camp.z) * k;
       this.toast('info', 'toast.world_edge');
     }
-    if (this.runtime.gather && mag > 0.35) {
-      this.cancelGather();
-    }
   }
 
-  private resolveCollisions(x: number, z: number): { x: number; z: number } {
-    const obstacles = this.obstacles();
-    let px = x;
-    let pz = z;
-    for (let iter = 0; iter < 3; iter += 1) {
-      let moved = false;
-      for (const o of obstacles) {
-        const dx = px - o.x;
-        const dz = pz - o.z;
-        const min = o.radius + PLAYER_RADIUS;
-        const dist = Math.hypot(dx, dz);
-        if (dist < min && dist > 0.0001) {
-          const push = min - dist;
-          px += (dx / dist) * push;
-          pz += (dz / dist) * push;
-          moved = true;
+  /** True when the player's body can occupy this point. */
+  private isPositionFree(x: number, z: number): boolean {
+    if (terrainHeight(x, z) < WATER_LEVEL - 0.55) return false;
+    const radius = PLAYER_RADIUS;
+    for (const o of this.obstacles()) {
+      const dx = x - o.x;
+      const dz = z - o.z;
+      const min = o.radius + radius;
+      if (dx * dx + dz * dz < min * min) return false;
+    }
+    return true;
+  }
+
+  private nearestObstaclePush(x: number, z: number): { x: number; z: number } | null {
+    const radius = PLAYER_RADIUS;
+    let best: { x: number; z: number; depth: number } | null = null;
+    for (const o of this.obstacles()) {
+      const dx = x - o.x;
+      const dz = z - o.z;
+      const min = o.radius + radius;
+      const dist = Math.hypot(dx, dz);
+      if (dist < min && dist > 0.0001) {
+        const depth = min - dist;
+        if (!best || depth > best.depth) {
+          best = { x: (dx / dist) * (depth + 0.02), z: (dz / dist) * (depth + 0.02), depth };
         }
       }
-      if (!moved) break;
     }
-    return { x: px, z: pz };
+    return best ? { x: best.x, z: best.z } : null;
+  }
+
+  /**
+   * Sub-stepped movement with axis sliding. Full step first, then X-only and
+   * Z-only so the player slides around trunks and walls instead of sticking.
+   */
+  private moveWithCollisions(
+    x: number,
+    z: number,
+    dx: number,
+    dz: number,
+  ): { x: number; z: number; distance: number } {
+    const length = Math.hypot(dx, dz);
+    if (length < 1e-5) return { x, z, distance: 0 };
+    const steps = Math.min(8, Math.max(1, Math.ceil(length / 0.22)));
+    const stepX = dx / steps;
+    const stepZ = dz / steps;
+    let cx = x;
+    let cz = z;
+    let moved = 0;
+
+    for (let i = 0; i < steps; i += 1) {
+      const nx = cx + stepX;
+      const nz = cz + stepZ;
+      if (this.isPositionFree(nx, nz)) {
+        cx = nx;
+        cz = nz;
+        moved += Math.hypot(stepX, stepZ);
+        continue;
+      }
+      if (Math.abs(stepX) > 1e-5 && this.isPositionFree(nx, cz)) {
+        cx = nx;
+        moved += Math.abs(stepX);
+        continue;
+      }
+      if (Math.abs(stepZ) > 1e-5 && this.isPositionFree(cx, nz)) {
+        cz = nz;
+        moved += Math.abs(stepZ);
+        continue;
+      }
+      break;
+    }
+
+    return { x: cx, z: cz, distance: moved };
   }
 
   private obstacles(): StaticObstacle[] {
@@ -737,6 +817,7 @@ export class GameEngine {
         this.advanceQuest('collect', id, qty);
       }
       this.state.stats.itemsCrafted += 1;
+      if (recipe.id === 'roasted_berries') this.state.flags.cooked_once = true;
       this.grantXp(recipe.xp);
       this.grantSkill(recipe.skill, Math.round(recipe.xp * 0.6));
       this.advanceQuest('craft', recipe.id, 1);
@@ -789,6 +870,25 @@ export class GameEngine {
       const dist = DIST(this.state.player.x, this.state.player.z, REGION.camp.x, REGION.camp.z);
       if (dist < 10 && !this.runtime.gather) this.advanceQuest('return_home', undefined, 1);
     }
+  }
+
+  private updateGoals(dt: number) {
+    this.runtime.goalTimer -= dt;
+    if (this.runtime.goalTimer > 0) return;
+    this.runtime.goalTimer = 2;
+    const next = nextGoal(this.state);
+    if (!next) return;
+    if (next.progress.current < next.progress.target) return;
+    const { goal } = next;
+    this.state.flags[goalFlag(goal.id)] = true;
+    this.grantXp(goal.rewardXp);
+    if (goal.rewardItems) {
+      for (const [id, qty] of Object.entries(goal.rewardItems)) this.giveItem(id, qty, false);
+    }
+    this.toast('story', 'toast.goal_complete', { goal: goal.titleKey });
+    this.sfx(SFX.quest);
+    this.haptic('success');
+    this.requestSave();
   }
 
   private updateAutosave(dt: number) {
@@ -1007,6 +1107,7 @@ export class GameEngine {
       };
     }
     this.runtime.nodeRevision += 1;
+    this.runtime.impact = { x: node.x, z: node.z, kind: node.kind, at: Date.now() };
     void gathered;
   }
 
@@ -1100,6 +1201,7 @@ export class GameEngine {
     if (target.kind === 'gather' && target.nodeId) {
       const node = this.nodes.find((n) => n.id === target.nodeId);
       if (!node) return null;
+      this.state.player.facing = Math.atan2(node.x - this.state.player.x, -(node.z - this.state.player.z));
       this.runtime.gather = {
         nodeId: node.id,
         elapsed: 0,
@@ -1391,6 +1493,7 @@ export class GameEngine {
       }
     }
     this.runtime.obstacleCache = null;
+    this.runtime.impact = { x: structure.x, z: structure.z, kind: 'build', at: Date.now() };
     this.state.stats.structuresBuilt += 1;
     this.grantXp(45);
     this.grantSkill('crafting', 25);
@@ -1490,9 +1593,11 @@ export class GameEngine {
     if (t) {
       const dist = DIST(p.x, p.z, t.x, t.z);
       const targetAngle = Math.atan2(t.x - p.x, -(t.z - p.z));
+      if (dist < 4.2) p.facing = targetAngle;
       const delta = Math.abs((((targetAngle - p.facing + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) - Math.PI);
       if (dist < 3.8 && delta < 1.5) {
         t.health -= damage;
+        this.runtime.impact = { x: t.x, z: t.z, kind: 'hit', at: Date.now() };
         this.grantSkill('combat', 5);
         this.grantXp(4);
         this.sfx(SFX.hit);
@@ -1567,6 +1672,18 @@ export class GameEngine {
         completed: [...this.state.quest.completed],
         progress: { ...this.state.quest.progress },
       },
+      goal: (() => {
+        const next = nextGoal(this.state);
+        return next
+          ? {
+              id: next.goal.id,
+              titleKey: next.goal.titleKey,
+              descKey: next.goal.descKey,
+              current: next.progress.current,
+              target: next.progress.target,
+            }
+          : null;
+      })(),
       discoveries: [...this.state.discoveries],
       story: [...this.state.story],
       tutorial: { ...this.state.tutorial },

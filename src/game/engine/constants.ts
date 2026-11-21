@@ -12,7 +12,7 @@ export const RUN_SPEED = 4.4;
 export const SPRINT_SPEED = 7.1;
 export const SPRINT_STAMINA_MIN = 8;
 
-export const PLAYER_RADIUS = 0.42;
+export const PLAYER_RADIUS = 0.36;
 export const BASE_INVENTORY_SLOTS = 24;
 export const BASE_STORAGE_SLOTS = 0;
 export const MAX_STORAGE_SLOTS = 32;

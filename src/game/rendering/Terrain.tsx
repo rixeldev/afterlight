@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import { terrainHeight, WATER_LEVEL } from '../world/terrain';
-import { getTexture } from './assets';
+import { getNormalMap, getRippleNormal, getTexture } from './assets';
 
 const SIZE = 170;
 
@@ -80,12 +80,16 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
   }, [segments]);
 
   const texture = useMemo(() => getTexture('grass_albedo', lowQuality ? 18 : 30, 2.1), [lowQuality]);
+  const normalMap = useMemo(() => getNormalMap('grass_albedo', lowQuality ? 18 : 30, 1.1), [lowQuality]);
+  const normalScale = useMemo(() => new THREE.Vector2(0.8, 0.8), []);
 
   return (
     <mesh geometry={geometry} receiveShadow={shadows} frustumCulled={false}>
       <meshStandardMaterial
         vertexColors
         map={texture}
+        normalMap={normalMap}
+        normalScale={normalScale}
         roughness={0.98}
         metalness={0}
         color="#FFFFFF"
@@ -97,11 +101,15 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
 export function Water({ lowQuality }: { lowQuality: boolean }) {
   const mesh = useRef<THREE.Mesh>(null);
   const material = useRef<THREE.MeshStandardMaterial>(null);
-  useFrame((state) => {
-    if (!material.current) return;
+  const ripple = useMemo(() => getRippleNormal(), []);
+  const normalScale = useMemo(() => new THREE.Vector2(0.45, 0.45), []);
+  useFrame((state, rawDelta) => {
     const t = state.clock.elapsedTime;
-    material.current.opacity = 0.78 + Math.sin(t * 0.35) * 0.03;
-    if (mesh.current) mesh.current.position.y = WATER_LEVEL + Math.sin(t * 0.22) * 0.015;
+    ripple.offset.x += Math.min(0.05, rawDelta) * 0.012;
+    ripple.offset.y += Math.min(0.05, rawDelta) * 0.007;
+    if (!material.current) return;
+    material.current.opacity = 0.82 + Math.sin(t * 0.35) * 0.02;
+    if (mesh.current) mesh.current.position.y = WATER_LEVEL + Math.sin(t * 0.22) * 0.012;
   });
   return (
     <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_LEVEL, 0]} renderOrder={1}>
@@ -109,10 +117,12 @@ export function Water({ lowQuality }: { lowQuality: boolean }) {
       <meshStandardMaterial
         ref={material}
         color="#3E5F5B"
+        normalMap={ripple}
+        normalScale={normalScale}
         transparent
         opacity={0.82}
-        roughness={lowQuality ? 0.5 : 0.18}
-        metalness={0.28}
+        roughness={lowQuality ? 0.42 : 0.14}
+        metalness={0.35}
         depthWrite={false}
       />
     </mesh>

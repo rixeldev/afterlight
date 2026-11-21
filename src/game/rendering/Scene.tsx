@@ -19,6 +19,7 @@ import {
 } from './WorldProps';
 import { PlayerAvatar } from './PlayerAvatar';
 import { ThreatActor } from './ThreatActor';
+import { ImpactFx } from './ImpactFx';
 import { AppText, Button } from '../../ui/components/Primitives';
 import { C } from '../../ui/theme';
 import { useSettings, useT } from '../../state/settingsStore';
@@ -64,7 +65,7 @@ function CameraRig() {
   const desired = useRef(new THREE.Vector3());
   const target = useRef(new THREE.Vector3());
   const initialized = useRef(false);
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const engine = getEngine();
     if (!engine) return;
     const p = engine.state.player;
@@ -87,6 +88,12 @@ function CameraRig() {
       const k = 1 - Math.exp(-delta * 9.5);
       camera.position.lerp(desired.current, k);
       look.current.lerp(target.current, k);
+    }
+    const impactShake = engine.runtime.damageFlash;
+    if (impactShake > 0.01) {
+      const t = state.clock.elapsedTime * 46;
+      camera.position.x += Math.sin(t * 1.7) * 0.11 * impactShake;
+      camera.position.y += Math.cos(t * 2.3) * 0.08 * impactShake;
     }
     camera.lookAt(look.current);
     if (camera instanceof THREE.PerspectiveCamera) {
@@ -120,6 +127,7 @@ function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
       <Structures revision={revision} />
       <PlayerAvatar shadows={shadows} />
       <ThreatActor shadows={shadows} />
+      <ImpactFx />
     </>
   );
 }
