@@ -94,13 +94,15 @@ EAS never reads `keystore.properties`; the credentials live in Expo's encrypted 
 
 ### Verified locally
 
-On 2026-11-21 the full path was exercised on this machine:
+On 2026-11-21 the full path was exercised on this machine (final build 14:04):
 
 - `npx expo prebuild --platform android --clean`
 - `node tools/android/configure-signing.mjs`
 - `./gradlew bundleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a`
 - `jarsigner -verify app-release.aab` → **jar verified**
-- Bundle: 34 MB, `base/lib/arm64-v8a` + `base/lib/armeabi-v7a`, no credential files inside.
+- Bundle: 35 MB, `base/lib/arm64-v8a` + `base/lib/armeabi-v7a`, no credential files inside.
+- Includes the two release-only fixes verified on a Galaxy S22+: Expo `GLView` keep rules
+  and removal of `react-native-svg` gradient children that crashed Fabric.
 - Release minification (R8) and `lintVitalRelease` passed.
 
 The AAB has **not** been uploaded to Play Console; that requires the account and a versionCode

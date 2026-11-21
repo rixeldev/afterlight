@@ -15,6 +15,8 @@ signal into the woods, and find out what the light left behind.
 | ![Gathering](docs/screenshots/gathering.webp) | ![Crafting](docs/screenshots/crafting.webp) |
 | **Settings that fit the hand** | **Journal roadmap** |
 | ![Settings](docs/screenshots/settings.webp) | ![Journal](docs/screenshots/journal.webp) |
+| **Building with live validation** | **Map, discoveries and goals** |
+| ![Building](docs/screenshots/building.webp) | ![Map](docs/screenshots/map.webp) |
 
 ---
 
