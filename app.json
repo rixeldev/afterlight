@@ -60,7 +60,18 @@
       ],
       "expo-font",
       "expo-sqlite",
-      "expo-localization"
+      "expo-localization",
+      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "\n# AFTERLIGHT: Expo view managers instantiate views by reflection\n-keep class expo.modules.gl.** { *; }\n-keep class expo.modules.kotlin.views.** { *; }\n-keepclassmembers class * extends android.view.View {\n    <init>(...);\n}\n"
+          }
+        }
+      ]
     ],
     "extra": {
       "privacy": "no telemetry, no ads, no network"

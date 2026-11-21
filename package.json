@@ -10,6 +10,7 @@
     "expo": "~58.0.26",
     "expo-audio": "~58.0.12",
     "expo-blur": "~58.0.6",
+    "expo-build-properties": "~58.0.12",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.12",
     "expo-gl": "~58.0.4",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
     "@types/react": "~19.3.0",
     "@types/three": "^0.187.0",
     "eslint": "^9.0.0",
@@ -63,7 +65,7 @@
       "<rootDir>/ios"
     ]
   },
-  "description": "AFTERLIGHT \u2014 a third-person survival RPG for Android and iOS. Gather, craft, rebuild, explore Greenhaven.",
+  "description": "AFTERLIGHT — a third-person survival RPG for Android and iOS. Gather, craft, rebuild, explore Greenhaven.",
   "author": "RixelDev",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
