@@ -24,6 +24,7 @@ export function Hud() {
   const openPanel = useSession((s) => s.openPanel);
   const tutorialVisible = useSession((s) => s.tutorialVisible);
   const savePulse = useSession((s) => s.savePulse);
+  const rendererFailed = useSession((s) => s.rendererFailed);
   const [restOpen, setRestOpen] = useState(false);
   const [fps, setFps] = useState(0);
   const [draws, setDraws] = useState(0);
@@ -39,7 +40,7 @@ export function Hud() {
 
   if (!snapshot) return null;
  const compact = width < 820;
-  const hint = tutorialVisible ? currentTutorialHint(snapshot) : null;
+  const hint = tutorialVisible && !rendererFailed ? currentTutorialHint(snapshot) : null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">

@@ -42,6 +42,29 @@ behaviour or context lifecycle on real hardware.
 5. **Silent GL failure.** The emulator eventually could not create a GL context after a display
    resize; the app now shows a retry / reduce-graphics screen after 60 s instead of a black screen.
 
+### Device smoke test — Android emulator
+
+Environment: Android API 37 x86_64, SwiftShader software GL, debug APK, Metro dev bundle.
+
+**Passed**
+- Cold boot → splash → menu; font loading; key art and journey card.
+- New journey; 3D scene rendered with the starter GLB tree/rock/cabin, instanced vegetation,
+  terrain, water plane, day palette and the survivor avatar.
+- HUD vitals, compass, tracked objective, dock and action cluster at 2400×1080.
+- Joystick movement advanced the walk objective to 16.3 m and the world clock to 08:11, proving
+  input, fixed-step simulation and HUD sync.
+- Autosave produced a valid SQLite save; process restart resumed to the menu with the same
+  position, needs and quest counters. The save was extracted and validated offline.
+- After the emulator's GL context stopped initialising, the new watchdog surfaced the retry /
+  reduce-graphics screen instead of a black view.
+
+**Blocked by the environment**
+- The emulator eventually stopped creating any `expo-gl` context, including after an AVD wipe and
+  cold boot. This is a host GPU/SwiftShader limitation, not a JS exception; the same APK rendered
+  the world earlier. Physical-device QA remains mandatory.
+- Panel flows beyond the HUD (pack, map, journal, crafting, building) were not exercised on this
+  emulator; they are covered by unit logic and compile-time checks, not yet by device taps.
+
 ### Phase 1 — Movement prototype — Done
 
 - Deterministic Greenhaven heightfield shared by physics, rendering and the minimap.
@@ -55,7 +78,7 @@ behaviour or context lifecycle on real hardware.
 - Seven node kinds incl. springs and story caches; charge-based depletion and timed respawn.
 - Hold-to-gather with progress ring, tool bonuses, skill scaling, capacity pre-check.
 - 24-slot inventory, stack limits, quick use, item details, equip/unequip, drop.
-- 71 automated tests across inventory, needs, building, quests, saves and engine flows.
+- 73 automated tests across inventory, needs, building, quests, saves and engine flows.
 
 ### Phase 3 — Crafting & building — Done
 

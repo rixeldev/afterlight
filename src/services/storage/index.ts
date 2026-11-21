@@ -16,7 +16,11 @@ export function ensureSaveService(): Promise<SaveService> {
     try {
       repository = new SqliteSaveRepository();
       const candidate = new SaveService(repository);
-      await candidate.init();
+      // A stuck native SQLite open must not freeze the boot or the save UI.
+      await Promise.race([
+        candidate.init(),
+        new Promise<void>((_, reject) => setTimeout(() => reject(new Error('sqlite init timeout')), 4000)),
+      ]);
       service = candidate;
       return candidate;
     } catch {

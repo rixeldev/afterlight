@@ -195,10 +195,14 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
   }, []);
 
   useEffect(() => {
+    useSession.getState().setRendererFailed(glFailed && !glReady);
+  }, [glFailed, glReady]);
+
+  useEffect(() => {
     if (!mounted || glReady || glFailed) return;
     // Some drivers fail to create an Expo GL context without throwing. Never
     // leave the player looking at an unexplained black screen.
-    const id = setTimeout(() => setGlFailed(true), 60000);
+    const id = setTimeout(() => setGlFailed(true), 30000);
     return () => clearTimeout(id);
   }, [mounted, glReady, glFailed]);
 
@@ -255,6 +259,7 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
           camera={{ fov: 58, near: 0.12, far: 420, position: [0, 8, 14] }}
           onCreated={({ gl, scene }) => {
             setGlReady(true);
+            useSession.getState().setRendererFailed(false);
             gl.setClearColor('#0B1714', 1);
             gl.toneMappingExposure = 1.18;
             scene.background = new THREE.Color('#0B1714');

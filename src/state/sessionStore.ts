@@ -58,6 +58,7 @@ export interface SessionState {
   saving: boolean;
   savePulse: boolean;
   tutorialVisible: boolean;
+  rendererFailed: boolean;
   fatalError: string | null;
 
   boot: () => Promise<void>;
@@ -97,6 +98,7 @@ export interface SessionState {
   replayTutorial: () => void;
   setGraphics: (quality: GraphicsQuality) => void;
   markTutorialSeen: (step: number) => void;
+  setRendererFailed: (failed: boolean) => void;
 }
 
 let toastSeq = 1;
@@ -159,6 +161,7 @@ export const useSession = create<SessionState>((set, get) => ({
   saving: false,
   savePulse: false,
   tutorialVisible: true,
+  rendererFailed: false,
   fatalError: null,
 
   boot: async () => {
@@ -270,9 +273,20 @@ export const useSession = create<SessionState>((set, get) => ({
     if (!engine) return;
     if (get().saving) return;
     set({ saving: true });
+    const guard = setTimeout(() => {
+      if (useSession.getState().saving) {
+        useSession.setState({
+          saving: false,
+          toasts: pushToast(useSession.getState().toasts, 'error', translate(localeNow(), 'toast.save_failed')),
+        });
+      }
+    }, 8000);
     try {
       const service = await ensureSaveService();
-      const result = await service.save(engine.toSave());
+      const timeout = new Promise<{ ok: false; bytes: 0; error: string }>((resolve) =>
+        setTimeout(() => resolve({ ok: false, bytes: 0, error: 'timeout' }), 6000),
+      );
+      const result = await Promise.race([service.save(engine.toSave()), timeout]);
       if (result.ok) {
         loadedSave = engine.toSave();
         set({
@@ -295,6 +309,8 @@ export const useSession = create<SessionState>((set, get) => ({
         saving: false,
         toasts: pushToast(get().toasts, 'error', translate(localeNow(), 'toast.save_failed')),
       });
+    } finally {
+      clearTimeout(guard);
     }
   },
 
@@ -454,6 +470,10 @@ export const useSession = create<SessionState>((set, get) => ({
 
   markTutorialSeen: (step) => {
     void step;
+  },
+
+  setRendererFailed: (failed) => {
+    if (get().rendererFailed !== failed) set({ rendererFailed: failed });
   },
 }));
 

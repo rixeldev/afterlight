@@ -4,7 +4,7 @@
 
 ```bash
 npm run typecheck   # TypeScript strict
-npm test            # Jest (71 tests, 8 suites)
+npm test            # Jest (73 tests, 8 suites)
 npm run lint        # ESLint, zero warnings
 npx expo export --platform android --output-dir /tmp/afterlight-export   # Metro/Hermes bundle
 ```
