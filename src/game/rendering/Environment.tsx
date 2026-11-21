@@ -8,10 +8,10 @@ type Stop = { h: number; top: string; horizon: string; sun: string; ambient: num
 const STOPS: Stop[] = [
   { h: 0, top: '#050A10', horizon: '#17232C', sun: '#AFC4DA', ambient: 0.62, direct: 0.45, fog: '#101B20' },
   { h: 5, top: '#071218', horizon: '#1E2C36', sun: '#AFC4DA', ambient: 0.62, direct: 0.42, fog: '#141F25' },
-  { h: 6.5, top: '#22363E', horizon: '#E8BE92', sun: '#FFDFAF', ambient: 0.85, direct: 0.95, fog: '#7C8878' },
-  { h: 9, top: '#3C5B68', horizon: '#B9CDCB', sun: '#FFF3D6', ambient: 1.1, direct: 1.45, fog: '#9FB2AA' },
-  { h: 16, top: '#3C5B68', horizon: '#B9CDCB', sun: '#FFF0CC', ambient: 1.05, direct: 1.4, fog: '#9FB2AA' },
-  { h: 18.5, top: '#31384A', horizon: '#E09C74', sun: '#FFC08A', ambient: 0.82, direct: 0.9, fog: '#8C8476' },
+  { h: 6.5, top: '#24414E', horizon: '#F0C79A', sun: '#FFE3B4', ambient: 0.92, direct: 1.05, fog: '#8E9A86' },
+  { h: 9, top: '#2F5F78', horizon: '#C9DCD4', sun: '#FFF3D6', ambient: 1.12, direct: 1.55, fog: '#A8BEB4' },
+  { h: 16, top: '#2F5F78', horizon: '#C9DCD4', sun: '#FFF0CC', ambient: 1.08, direct: 1.5, fog: '#A8BEB4' },
+  { h: 18.5, top: '#2C3548', horizon: '#E6A078', sun: '#FFC08A', ambient: 0.88, direct: 1.0, fog: '#948878' },
   { h: 20.5, top: '#0D1824', horizon: '#2F3B44', sun: '#AFC4DA', ambient: 0.6, direct: 0.4, fog: '#1E282E' },
   { h: 24, top: '#050A10', horizon: '#17232C', sun: '#AFC4DA', ambient: 0.62, direct: 0.45, fog: '#101B20' },
 ];
@@ -180,7 +180,7 @@ export function Environment({ quality }: { quality: 'low' | 'medium' | 'high' })
         position={[40, 90, 30]}
         intensity={1.1}
         color="#FFEFD2"
-        castShadow={quality === 'high'}
+        castShadow={quality !== 'low'}
         shadow-mapSize-width={quality === 'high' ? 1024 : 512}
         shadow-mapSize-height={quality === 'high' ? 1024 : 512}
         shadow-camera-left={-26}

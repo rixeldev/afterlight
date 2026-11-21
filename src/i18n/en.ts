@@ -478,6 +478,7 @@ export const en = {
   'goal.pack.title': 'Carry more home',
   'goal.pack.desc': 'Expand your pack with a field pack.',
   'toast.goal_complete': 'Homestead goal: {goal}',
+  'hud.next_goal_short': 'Next',
   'hud.next_goal': 'Next goal',
   'journal.goals': 'Homestead goals',
   'journal.goals_hint': 'Small, useful steps that make the homestead stronger.',

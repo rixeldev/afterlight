@@ -49,7 +49,7 @@ writeFileSync(join(GENERATED, 'models.ts'), modelsTs);
 
 // ── Textures ──────────────────────────────────────────────────────────────
 const textures = ['grass_albedo', 'bark_albedo', 'stone_albedo', 'weathered_wood_albedo'];
-const SIZE = 128;
+const SIZE = 256;
 let texturesTs = `${banner}\n/**\n * Raw RGBA pixels (128x128) decoded from the starter-kit albedo PNGs.\n * Embedded so textures load synchronously on device as THREE.DataTexture.\n */\nexport const TEXTURE_RGBA_BASE64 = {\n`;
 const convert = has('convert') ? 'convert' : has('magick') ? 'magick' : null;
 for (const id of textures) {

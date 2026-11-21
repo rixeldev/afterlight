@@ -168,11 +168,14 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
         </mesh>
 
         {/* backpack */}
-        <mesh position={[0, 1.1, -0.28]} rotation={[0.05, 0, 0]} material={beltMaterial} castShadow={shadows}>
-          <boxGeometry args={[0.38, 0.46, 0.18]} />
+        <mesh position={[0, 1.1, -0.24]} rotation={[0.05, 0, 0]} material={beltMaterial} castShadow={shadows}>
+          <boxGeometry args={[0.32, 0.4, 0.14]} />
         </mesh>
-        <mesh position={[0, 1.1, -0.38]} material={scarfMaterial}>
-          <boxGeometry args={[0.3, 0.12, 0.05]} />
+        <mesh position={[0, 1.28, -0.24]} rotation={[0, 0, Math.PI / 2]} material={scarfMaterial}>
+          <cylinderGeometry args={[0.06, 0.06, 0.34, 6]} />
+        </mesh>
+        <mesh position={[0, 1.1, -0.32]} material={scarfMaterial}>
+          <boxGeometry args={[0.24, 0.1, 0.04]} />
         </mesh>
 
         {/* arms */}

@@ -48,7 +48,9 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
       } else if (slope > 1.6) {
         color.copy(rock).lerp(grassDark, Math.max(0, 1.5 - slope * 0.5));
       } else {
-        color.copy(grass).lerp(grassDark, noise * 0.85);
+        const macro = (Math.sin(x * 0.031 + z * 0.017) + Math.cos(x * 0.021 - z * 0.028) + 2) / 4;
+        color.copy(grass).lerp(grassDark, noise * 0.55 + macro * 0.35);
+        color.offsetHSL(0.004 * macro, 0.02 * macro, 0.01 * (macro - 0.5));
       }
       const campDist = Math.hypot(x, z);
       if (campDist < 13 && y > WATER_LEVEL) {

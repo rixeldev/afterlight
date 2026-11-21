@@ -229,8 +229,8 @@ function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boole
           <View style={styles.goalDivider} />
           <View style={styles.goalRow}>
             <Icon name="target" size={12} color={C.accent} />
-            <AppText variant="micro" color={C.textMuted} style={{ width: 60 }}>
-              {t('hud.next_goal')}
+            <AppText variant="micro" color={C.textMuted} style={{ width: 32 }}>
+              {t('hud.next_goal_short')}
             </AppText>
             <AppText variant="caption" color={C.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
               {t(snapshot.goal.titleKey)}

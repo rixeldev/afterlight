@@ -257,6 +257,7 @@ export interface WorldDecor {
   ferns: DecorItem[];
   pebbles: DecorItem[];
   logs: DecorItem[];
+  flowers: DecorItem[];
 }
 
 /** Purely visual scatter (never saved, never harvested). */
@@ -266,6 +267,7 @@ export function generateDecor(): WorldDecor {
   const ferns: DecorItem[] = [];
   const pebbles: DecorItem[] = [];
   const logs: DecorItem[] = [];
+  const flowers: DecorItem[] = [];
 
   for (let i = 0; i < 520; i += 1) {
     const x = (rng() * 2 - 1) * 66;
@@ -294,7 +296,15 @@ export function generateDecor(): WorldDecor {
     if (lakeFactor(x, z) < 1.25) continue;
     logs.push({ x, z, scale: 0.9 + rng() * 0.6, rot: rng() * Math.PI * 2, variant: i % 2 });
   }
-  return { grass, ferns, pebbles, logs };
+  for (let i = 0; i < 64; i += 1) {
+    const angle = rng() * Math.PI * 2;
+    const dist = 10 + rng() * 32;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist;
+    if (lakeFactor(x, z) < 1.2 || isUnderwater(x, z)) continue;
+    flowers.push({ x, z, scale: 0.6 + rng() * 0.7, rot: rng() * Math.PI * 2, variant: i % 3 });
+  }
+  return { grass, ferns, pebbles, logs, flowers };
 }
 
 /** Points of interest geometry helpers used by the ranger-camp renderer. */

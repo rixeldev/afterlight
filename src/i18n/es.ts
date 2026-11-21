@@ -477,6 +477,7 @@ export const es: Dictionary = {
   'goal.pack.title': 'Llevar más a casa',
   'goal.pack.desc': 'Amplía tu mochila con una mochila de campo.',
   'toast.goal_complete': 'Objetivo del refugio: {goal}',
+  'hud.next_goal_short': 'Sig.',
   'hud.next_goal': 'Siguiente objetivo',
   'journal.goals': 'Objetivos del refugio',
   'journal.goals_hint': 'Pasos pequeños y útiles que hacen más fuerte el refugio.',

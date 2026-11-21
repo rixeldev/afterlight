@@ -24,6 +24,8 @@ export function AppText({
   style,
   numberOfLines,
   align,
+  adjustsFontSizeToFit,
+  minimumFontScale,
 }: {
   children: React.ReactNode;
   variant?: TextVariant;
@@ -31,11 +33,15 @@ export function AppText({
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
   align?: 'left' | 'center' | 'right';
+  adjustsFontSizeToFit?: boolean;
+  minimumFontScale?: number;
 }) {
   const scale = useTextScale();
   return (
     <Text
       numberOfLines={numberOfLines}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+      minimumFontScale={minimumFontScale}
       style={[
         textStyle(variant, scale),
         { color, textAlign: align },

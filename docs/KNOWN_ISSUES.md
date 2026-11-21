@@ -7,15 +7,16 @@ is proven and what is not.
 
 ## Not yet verified
 
-1. **Physical Android device.** The Hermes bundle builds and the world/GLB pipeline is exercised
-   by tests and bundling, but frame pacing, thermal behaviour, memory pressure, touch latency and
-   `expo-gl` context loss must still be measured on a mid-range phone (target: stable 30 FPS).
+1. **Physical Android device.** The signed release APK boots, enters the world, accepts input and
+   saves/resumes on a Galaxy S22+ (Android 16). Frame pacing, thermal behaviour, memory pressure,
+   touch latency and long sessions still need to be measured on a mid-range phone (target: stable
+   30 FPS).
 2. **iOS.** No macOS/Xcode in the build environment. The scene uses GLSL ES 1.0 and
    platform-neutral APIs, but an archive has not been produced.
-3. **Emulator smoke test.** A local API 37 x86_64 emulator with SwiftShader booted the game and
-   rendered the world. After changing the virtual display size the emulator could no longer create
-   a GL context (the app correctly showed its retry screen). A fresh AVD or physical device is
-   required for further GL testing; this is an emulator/driver limitation, not a game crash.
+3. **Release minification.** The first release APK crashed creating `GLView` because R8 removed a
+   reflected constructor. `expo-build-properties` now injects keep rules for
+   `expo.modules.gl.**` and all `View` constructors. This is verified on device and must stay in
+   place for every release build.
 4. **Full 5–20 minute playthrough on hardware.** The chapter is covered by unit/integration tests,
    not by a recorded device session.
 5. **Accessibility audit.** Large text, reduced motion and left-handed layout are implemented;

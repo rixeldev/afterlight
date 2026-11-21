@@ -36,16 +36,21 @@ function InstancedParts({
   items,
   castShadow,
   tint,
+  tints,
+  tintPart,
 }: {
   parts: ModelPart[];
   items: Xform[];
   castShadow: boolean;
   tint?: [number, number, number];
+  tints?: string[];
+  tintPart?: number;
 }) {
   const refs = useRef<(THREE.InstancedMesh | null)[]>([]);
   useLayoutEffect(() => {
     const dummy = new THREE.Object3D();
     const color = tint ? new THREE.Color(...tint) : null;
+    const perInstance = new THREE.Color();
     parts.forEach((_, i) => {
       const mesh = refs.current[i];
       if (!mesh) return;
@@ -56,15 +61,19 @@ function InstancedParts({
         dummy.updateMatrix();
         mesh.setMatrixAt(idx, dummy.matrix);
         if (color) mesh.setColorAt(idx, color);
+        if (tints && tintPart === i && tints[idx]) {
+          perInstance.set(tints[idx]!);
+          mesh.setColorAt(idx, perInstance);
+        }
       });
       mesh.instanceMatrix.needsUpdate = true;
-      if (color && mesh.instanceColor) {
+      if (mesh.instanceColor) {
         mesh.instanceColor.needsUpdate = true;
         (mesh.material as THREE.Material).needsUpdate = true;
       }
       mesh.computeBoundingSphere();
     });
-  }, [parts, items, tint]);
+  }, [parts, items, tint, tints, tintPart]);
 
   return (
     <>
@@ -118,11 +127,12 @@ export function Vegetation({
   const rockParts = useModelParts('stylized_rock');
   const decor = useMemo(() => generateDecor(), []);
 
-  const { trees, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs, ao } = useMemo(() => {
+  const { trees, treeTints, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs, flowers, flowerTints, ao } = useMemo(() => {
     void revision;
     const engine = getEngine();
     const nodes = engine?.nodes ?? [];
     const treeItems: Xform[] = [];
+    const treeColors: string[] = [];
     const stumpItems: Xform[] = [];
     const rockItems: Xform[] = [];
     const rockStumpItems: Xform[] = [];
@@ -149,6 +159,8 @@ export function Vegetation({
             sy: node.scale * (0.9 + ((node.x * 7) % 5) * 0.03),
             sz: node.scale,
           });
+          const palette = ['#A8D19A', '#8FBF86', '#B9D8A4', '#7FAE78', '#9CC98D'];
+          treeColors.push(palette[Math.abs(Math.round(node.x * 13 + node.z * 7)) % palette.length]!);
         }
       } else if (node.kind === 'rock') {
         if (depleted) {
@@ -221,6 +233,18 @@ export function Vegetation({
       sy: d.scale * 0.6,
       sz: d.scale,
     }));
+    const flowerItems = decor.flowers.map<Xform>((d) => ({
+      x: d.x,
+      y: terrainHeight(d.x, d.z) + 0.14,
+      z: d.z,
+      rot: d.rot,
+      sx: 1,
+      sy: 0.8,
+      sz: 1,
+    }));
+    const flowerTints = decor.flowers.map((d) =>
+      ['#F0DFA6', '#E4C6D2', '#D9E0A8'][d.variant] ?? '#F0DFA6',
+    );
     const logItems = decor.logs.map<Xform>((d) => ({
       x: d.x,
       y: terrainHeight(d.x, d.z) + 0.18,
@@ -233,6 +257,7 @@ export function Vegetation({
 
     return {
       trees: treeItems,
+      treeTints: treeColors,
       stumps: stumpItems,
       rocks: rockItems,
       rockStumps: rockStumpItems,
@@ -242,6 +267,8 @@ export function Vegetation({
       ferns: fernItems,
       pebbles: pebbleItems,
       logs: logItems,
+      flowers: flowerItems,
+      flowerTints,
       ao: aoItems,
     };
   }, [revision, decor, quality]);
@@ -298,6 +325,15 @@ export function Vegetation({
     () => [{ geometry: bladeGeometry, material: new THREE.MeshLambertMaterial({ color: '#94A868', side: THREE.DoubleSide }) }],
     [bladeGeometry],
   );
+  const flowerParts = useMemo<ModelPart[]>(
+    () => [
+      {
+        geometry: new THREE.SphereGeometry(0.055, 5, 4),
+        material: new THREE.MeshBasicMaterial({ color: '#FFFFFF' }),
+      },
+    ],
+    [],
+  );
   const pebbleParts = useMemo<ModelPart[]>(
     () => [
       {
@@ -337,7 +373,7 @@ export function Vegetation({
   return (
     <group>
       {trees.length > 0 && treeParts.length > 0 ? (
-        <InstancedParts parts={treeParts} items={trees} castShadow={shadows} />
+        <InstancedParts parts={treeParts} items={trees} castShadow={shadows} tints={treeTints} tintPart={1} />
       ) : (
         <FallbackTrees items={trees} />
       )}
@@ -412,6 +448,16 @@ export function Vegetation({
           parts={logParts}
           items={logs.map((l) => ({ ...l, sx: l.sx, sy: 1, sz: l.sz }))}
           castShadow={shadows}
+        />
+      ) : null}
+
+      {flowers.length > 0 ? (
+        <InstancedParts
+          parts={flowerParts}
+          items={flowers}
+          castShadow={false}
+          tints={flowerTints}
+          tintPart={0}
         />
       ) : null}
 

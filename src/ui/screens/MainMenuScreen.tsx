@@ -52,7 +52,9 @@ export function MainMenuScreen() {
   }, [fade, rise, fog, reducedMotion]);
 
 
-  const compact = height < 380 || width < 700;
+  const short = height < 470;
+  const compact = width < 700;
+  const titleSize = Math.min(64, Math.max(34, (width - 430) / 10));
 
   const start = async (mode: 'new' | 'continue') => {
     if (busy) return;
@@ -97,11 +99,17 @@ export function MainMenuScreen() {
             </View>
             <AppText
               variant="display"
-              style={[styles.title, compact ? { fontSize: 34, lineHeight: 40, letterSpacing: 4 } : null]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              style={[
+                styles.title,
+                { fontSize: titleSize, lineHeight: titleSize * 1.08, letterSpacing: titleSize > 50 ? 6 : 3 },
+              ]}
             >
               {t('app.title')}
             </AppText>
-            {!compact ? (
+            {!short ? (
               <AppText variant="body" color={C.textSecondary} style={{ marginTop: 6, maxWidth: 420 }}>
                 {t('region.greenhaven.subtitle')} — {t('map.subtitle')}
               </AppText>
@@ -112,7 +120,7 @@ export function MainMenuScreen() {
                 <Button
                   label={busy ? t('common.loading') : t('menu.continue')}
                   icon="play"
-                  compact={compact}
+                  compact={short}
                   onPress={() => void start('continue')}
                   full
                 />
@@ -120,7 +128,7 @@ export function MainMenuScreen() {
               <Button
                 label={busy && !saveInfo.exists ? t('common.loading') : t('menu.new_game')}
                 icon="sparkle"
-                compact={compact}
+                compact={short}
                 variant={saveInfo.exists ? 'secondary' : 'primary'}
                 onPress={() => (saveInfo.exists ? setConfirmNew(true) : void start('new'))}
                 full
@@ -131,11 +139,11 @@ export function MainMenuScreen() {
               </View>
             </View>
 
-            <View style={[styles.footer, compact ? { marginTop: SP.sm } : null]}>
+            <View style={[styles.footer, short ? { marginTop: SP.sm } : null]}>
               <AppText variant="micro" color={C.textMuted}>
                 {t('app.version', { version: '0.1.0' })}
               </AppText>
-              {!compact ? (
+              {!short ? (
                 <>
                   <View style={styles.footerDot} />
                   <AppText variant="micro" color={C.textMuted}>

@@ -42,7 +42,29 @@ behaviour or context lifecycle on real hardware.
 5. **Silent GL failure.** The emulator eventually could not create a GL context after a display
    resize; the app now shows a retry / reduce-graphics screen after 60 s instead of a black screen.
 
-### Device smoke test — Android emulator
+### Device feedback round 2 — release APK (Galaxy S22+, Android 16)
+
+- **Release crash fixed.** The first release build died as soon as the 3D canvas was created:
+  `IllegalStateException: Didn't find a correct constructor for class w21` in
+  `SimpleViewManagerWrapper.createViewInstance`. R8 had renamed/removed
+  `expo.modules.gl.GLView`'s reflected `(Context, AppContext)` constructor. Added ProGuard keep
+  rules through `expo-build-properties`; the release APK now enters a new journey and survives.
+- **Complete translation pass.** Every item, recipe, structure and station name/description was
+  missing from both dictionaries. Added them plus a coverage test that scans literal `t('…')` calls
+  and every dynamic content key.
+- **Joystick overhaul.** Replaced the small fixed ring with a floating movement zone that appears
+  under the thumb. Added a dead zone, analog speed, sub-stepped collision and axis sliding.
+- **Action animation.** Chop, mine, forage and water actions now drive a real arm/torso pose, the
+  avatar turns to the target, and impacts spawn wood/stone chips plus a ground ring. Camera shake
+  on damage.
+- **Sequential goals.** Twelve homestead goals with rewards, a permanent "next goal" row in the
+  HUD and a full roadmap in the journal.
+- **Visual pass.** 256 px textures with generated normal maps, textured GLB/props, scrolling water
+  ripples, instanced contact shadows, shadows on the Balanced preset and a cinematic vignette.
+- **Settings layout.** The custom slider was re-laid out with a measured track, a proper thumb and
+  a dedicated value column; the sheet content is capped and centred.
+
+### Device smoke test — Android emulator (historical)
 
 Environment: Android API 37 x86_64, SwiftShader software GL, debug APK, Metro dev bundle.
 

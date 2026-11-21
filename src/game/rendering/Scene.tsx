@@ -109,7 +109,7 @@ function CameraRig() {
 
 function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
   const revision = useWorldRevision();
-  const shadows = quality === 'high';
+  const shadows = quality !== 'low';
   return (
     <>
       <Environment quality={quality} />
@@ -262,7 +262,7 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
           style={styles.canvas}
           frameloop="always"
           flat
-          shadows={quality === 'high'}
+          shadows={quality !== 'low'}
           gl={{ antialias: quality !== 'low' }}
           camera={{ fov: 58, near: 0.12, far: 420, position: [0, 8, 14] }}
           onCreated={({ gl, scene }) => {

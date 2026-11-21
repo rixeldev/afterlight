@@ -23,10 +23,11 @@ persistent save, a seven-step opening chapter, a night threat, and a complete au
 presentation. See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md) for exact per-phase status
 and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
 
-> **On-device status:** the debug build boots, loads the world, accepts touch input, runs the
-> simulation, saves and resumes on an Android API 37 emulator (x86_64, software GL). Frame pacing
-> on that emulator is not representative. Physical-device QA and the iOS build remain the gates
-> before submission; see [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
+> **On-device status:** a signed **release APK** boots, enters the world, accepts touch input,
+> runs the simulation, saves and resumes on a Samsung Galaxy S22+ (SM-S906U, Android 16). The
+> release-only R8 crash on the first journey is fixed. Frame pacing profiling, full chapter QA and
+> the iOS build remain the gates before submission; see
+> [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 ---
 
@@ -55,6 +56,8 @@ and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
 **Exploration & story**
 - Three points of interest with discoveries, journal entries and authored audio-log fragments.
 - Seven-step opening chapter with rewards, an authored climax and a cinematic finale.
+- A sequential homestead director with 12 goal steps, rewards and a journal roadmap, so there is
+  always a concrete next action after the chapter.
 - A locked route teaser to the Silent City (next chapter).
 
 **Threat**
@@ -62,7 +65,8 @@ and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
   and can be driven off with an axe. It never deletes your progress.
 
 **Presentation**
-- Fully original 3D blockout art from the supplied AFTERLIGHT kit, instanced for mobile.
+- Fully original 3D art from the supplied AFTERLIGHT kit, instanced for mobile, with 256 px
+  albedo textures, generated normal maps, textured props and instanced contact shadows.
 - 26 procedurally synthesised audio files: music, day/night ambience, UI, gathering,
   crafting, combat and story cues. No third-party samples.
 - Sora + Inter type system, glass HUD, safe-area aware, landscape-first.
