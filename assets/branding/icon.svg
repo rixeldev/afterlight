@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101F1E"/>
+      <stop offset="0.62" stop-color="#203730"/>
+      <stop offset="1" stop-color="#C9A46C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFECC1" stop-opacity="1"/>
+      <stop offset="0.42" stop-color="#F6D79C" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#F6D79C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="700" r="300" fill="url(#glow)"/>
+  <circle cx="512" cy="700" r="96" fill="#FFEFC9"/>
+  <path d="M0 742 L150 690 L300 726 L430 662 L560 720 L700 660 L840 716 L1024 668 L1024 1024 L0 1024Z" fill="#13211D" opacity="0.85"/>
+  <path d="M0 820 L120 780 L260 812 L420 764 L560 806 L720 758 L880 806 L1024 772 L1024 1024 L0 1024Z" fill="#0B1512"/>
+  <!-- cabin silhouette -->
+  <g transform="translate(408 700)">
+    <rect x="0" y="46" width="150" height="86" fill="#0B1512"/>
+    <path d="M-16 50 L75 -8 L166 50 L156 58 L75 12 L-6 58Z" fill="#0B1512"/>
+    <rect x="58" y="76" width="34" height="56" fill="#E8BE7C"/>
+    <rect x="14" y="66" width="26" height="22" fill="#E8BE7C"/>
+  </g>
+  <!-- pine -->
+  <g transform="translate(690 640)" fill="#0B1512">
+    <rect x="26" y="120" width="16" height="130"/>
+    <path d="M34 0 L92 132 L62 122 L104 200 L70 188 L118 268 L-50 268 L-2 188 L-36 200 L6 122 L-24 132 Z"/>
+  </g>
+</svg>

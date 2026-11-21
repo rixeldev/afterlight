@@ -1,0 +1,73 @@
+{
+  "name": "afterlight",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/sora": "^0.4.2",
+    "@react-three/fiber": "^9.8.2",
+    "base64-js": "^1.5.1",
+    "expo": "~58.0.26",
+    "expo-audio": "~58.0.12",
+    "expo-blur": "~58.0.6",
+    "expo-device": "~58.0.5",
+    "expo-font": "~58.0.12",
+    "expo-gl": "~58.0.4",
+    "expo-haptics": "~58.0.8",
+    "expo-linear-gradient": "~58.0.4",
+    "expo-localization": "~58.0.5",
+    "expo-splash-screen": "~58.0.14",
+    "expo-sqlite": "~58.0.18",
+    "expo-system-ui": "~58.0.7",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-svg": "15.16.0",
+    "three": "^0.187.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.3.0",
+    "@types/three": "^0.187.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
+    "jest-expo": "~58.0.0",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint",
+    "assets:build": "node tools/assets/build-assets.mjs",
+    "audio:build": "node tools/audio/generate-audio.mjs",
+    "web": "expo start --web",
+    "bundle:android": "expo export --platform android"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "**/src/tests/**/*.test.ts"
+    ],
+    "collectCoverageFrom": [
+      "src/game/**/*.ts"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/android",
+      "<rootDir>/ios"
+    ]
+  },
+  "description": "AFTERLIGHT \u2014 a third-person survival RPG for Android and iOS. Gather, craft, rebuild, explore Greenhaven.",
+  "author": "RixelDev",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rixeldev/afterlight.git"
+  }
+}

@@ -55,3 +55,6 @@ yarn-error.*
 
 # Local upload signing config — DO NOT PUBLISH
 keystore.properties
+
+dist-check/
+.audio-tmp/

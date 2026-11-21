@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B171A"/>
+      <stop offset="0.34" stop-color="#16302F"/>
+      <stop offset="0.58" stop-color="#3C5B52"/>
+      <stop offset="0.76" stop-color="#8E9A78"/>
+      <stop offset="0.88" stop-color="#D8BC86"/>
+      <stop offset="1" stop-color="#F0D7A2"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFE9B8" stop-opacity="0.95"/>
+      <stop offset="0.25" stop-color="#F3CE8B" stop-opacity="0.55"/>
+      <stop offset="0.6" stop-color="#D9A96A" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#D9A96A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DCE4D3" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#DCE4D3" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#DCE4D3" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B4538"/>
+      <stop offset="1" stop-color="#16251F"/>
+    </linearGradient>
+    <linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#43604F"/>
+      <stop offset="1" stop-color="#2A4436"/>
+    </linearGradient>
+    <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6D7F6B"/>
+      <stop offset="1" stop-color="#4E6557"/>
+    </linearGradient>
+    <linearGradient id="vignette" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#050C0B" stop-opacity="0.55"/>
+      <stop offset="0.4" stop-color="#050C0B" stop-opacity="0"/>
+      <stop offset="1" stop-color="#050C0B" stop-opacity="0.7"/>
+    </linearGradient>
+    <radialGradient id="edgeShade" cx="0.5" cy="0.45" r="0.75">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.55"/>
+    </radialGradient>
+    <filter id="blur18"><feGaussianBlur stdDeviation="18"/></filter>
+    <filter id="blur40"><feGaussianBlur stdDeviation="40"/></filter>
+    <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- light shafts -->
+  <g opacity="0.22" filter="url(#blur18)">
+    <polygon points="900,470 1010,470 760,900 520,900" fill="#F6DFAE"/>
+    <polygon points="1000,470 1050,470 900,900 760,900" fill="#F6DFAE" opacity="0.6"/>
+  </g>
+
+  <!-- sun -->
+  <circle cx="985" cy="470" r="280" fill="url(#sunGlow)"/>
+  <circle cx="985" cy="470" r="62" fill="#FFEFC6" opacity="0.92"/>
+  <circle cx="985" cy="470" r="105" fill="#FFEBC0" opacity="0.18" filter="url(#blur18)"/>
+
+  <!-- far ridge -->
+  <path d="M0 520 L120 470 L250 505 L400 400 L520 470 L650 415 L800 495 L960 440 L1120 500 L1290 420 L1430 495 L1600 445 L1600 900 L0 900Z"
+        fill="url(#hillBack)" opacity="0.55"/>
+
+  <!-- fog band behind mid hills -->
+  <rect x="0" y="470" width="1600" height="180" fill="url(#fog)" opacity="0.7" filter="url(#blur18)"/>
+
+  <!-- mid ridge forest silhouettes -->
+  <g fill="#33503F" opacity="0.85">
+    <path d="M0 590 L60 545 L120 585 L190 520 L250 580 L330 535 L410 590 L500 540 L580 595 L660 545 L740 600 L830 545 L920 600 L1010 550 L1100 605 L1190 550 L1280 600 L1370 548 L1460 600 L1540 555 L1600 595 L1600 900 L0 900Z"/>
+  </g>
+  <g fill="#284336" opacity="0.9">
+    <path d="M0 640 Q200 585 400 640 T800 625 T1200 650 T1600 615 L1600 900 L0 900Z"/>
+  </g>
+
+  <!-- distant pines -->
+  <g fill="#22382D" opacity="0.8">
+    <path d="M150 600 l18 -64 l18 64 z M185 604 l14 -48 l14 48 z M300 596 l20 -72 l20 72 z"/>
+    <path d="M1180 600 l19 -70 l19 70 z M1215 604 l14 -50 l14 50 z M1280 594 l22 -78 l22 78 z"/>
+  </g>
+
+  <!-- mist mid -->
+  <rect x="0" y="560" width="1600" height="210" fill="url(#fog)" opacity="0.45" filter="url(#blur40)"/>
+
+  <!-- foreground hill -->
+  <path d="M0 760 Q180 690 360 742 T740 735 T1120 748 T1600 700 L1600 900 L0 900Z" fill="url(#hillFront)"/>
+  <g opacity="0.25" stroke="#8FA47C" stroke-width="3" stroke-linecap="round">
+    <path d="M300 800 q10 -18 24 -24 M314 800 q-2 -22 6 -36 M700 815 q8 -16 22 -22 M714 815 q-2 -20 4 -34 M1240 790 q10 -18 26 -24 M1256 790 q-2 -22 6 -36 M980 812 q8 -16 22 -22"/>
+  </g>
+
+  <!-- cabin on the ridge -->
+  <g transform="translate(690 660) scale(1.35)">
+    <ellipse cx="90" cy="120" rx="120" ry="16" fill="#0B1512" opacity="0.45"/>
+    <rect x="18" y="52" width="150" height="72" fill="#4A3A2B"/>
+    <rect x="18" y="52" width="150" height="72" fill="#6B5238" opacity="0.55"/>
+    <g stroke="#2B2118" stroke-width="2" opacity="0.7">
+      <path d="M18 64 H168 M18 76 H168 M18 88 H168 M18 100 H168 M18 112 H168"/>
+    </g>
+    <!-- mossy roof -->
+    <path d="M2 56 L93 -10 L184 56 L170 62 L93 4 L16 62 Z" fill="#3E5142"/>
+    <path d="M2 56 L93 -10 L184 56 L93 24 Z" fill="#5A6E52" opacity="0.65"/>
+    <!-- doorway -->
+    <rect x="74" y="82" width="36" height="42" fill="#181410"/>
+    <!-- window -->
+    <rect x="32" y="72" width="30" height="26" fill="#E7BD77"/>
+    <rect x="32" y="72" width="30" height="26" fill="#FFE2A8" opacity="0.35"/>
+    <path d="M47 72 v26 M32 85 h30" stroke="#2A2116" stroke-width="2.5"/>
+    <!-- chimney + smoke -->
+    <rect x="140" y="8" width="15" height="30" fill="#57483A"/>
+    <g fill="#DCE0D2" opacity="0.3">
+      <circle cx="150" cy="-8" r="12" filter="url(#blur8)"/>
+      <circle cx="162" cy="-34" r="18" filter="url(#blur8)"/>
+      <circle cx="148" cy="-62" r="24" filter="url(#blur8)"/>
+      <circle cx="170" cy="-96" r="30" filter="url(#blur8)"/>
+    </g>
+    <!-- porch light -->
+    <circle cx="128" cy="82" r="16" fill="#FFD796" opacity="0.25" filter="url(#blur18)"/>
+  </g>
+
+  <!-- lone pine foreground left -->
+  <g transform="translate(150 540)" fill="#101C17">
+    <path d="M55 300 L55 170 L64 170 L64 300 Z"/>
+    <path d="M60 10 L104 110 L86 104 L120 170 L96 164 L132 232 L78 222 L82 300 L40 300 L44 222 L-10 232 L26 164 L2 170 L36 104 L18 110 Z" opacity="0.95"/>
+  </g>
+
+  <!-- dead branches right -->
+  <g transform="translate(1420 610)" stroke="#0F1A16" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.9">
+    <path d="M0 300 C-6 210 10 140 46 84"/>
+    <path d="M22 190 C46 160 70 150 96 152"/>
+    <path d="M12 250 C-16 226 -34 200 -40 168"/>
+    <path d="M40 120 C32 92 36 68 52 48"/>
+  </g>
+
+  <!-- birds -->
+  <g stroke="#1C2A25" stroke-width="2.5" fill="none" opacity="0.55">
+    <path d="M430 240 q10 -8 20 0 q10 -8 20 0"/>
+    <path d="M500 200 q8 -6 16 0 q8 -6 16 0"/>
+    <path d="M390 300 q7 -5 14 0 q7 -5 14 0"/>
+  </g>
+
+  <rect width="1600" height="900" fill="url(#edgeShade)"/>
+  <rect width="1600" height="900" fill="url(#vignette)"/>
+</svg>
