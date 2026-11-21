@@ -10,7 +10,11 @@ signal into the woods, and find out what the light left behind.
 
 | Main menu | In the valley |
 | --- | --- |
-| ![Main menu](docs/screenshots/main-menu.png) | ![Greenhaven](docs/screenshots/greenhaven.png) |
+| ![Main menu](docs/screenshots/main-menu.webp) | ![Greenhaven](docs/screenshots/greenhaven.webp) |
+| **Gathering with a full action pose** | **Crafting with real costs** |
+| ![Gathering](docs/screenshots/gathering.webp) | ![Crafting](docs/screenshots/crafting.webp) |
+| **Settings that fit the hand** | **Journal roadmap** |
+| ![Settings](docs/screenshots/settings.webp) | ![Journal](docs/screenshots/journal.webp) |
 
 ---
 
