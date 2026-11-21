@@ -382,6 +382,7 @@ export const es: Dictionary = {
   'settings.reduced_motion': 'Reducir movimiento',
   'settings.large_text': 'Texto más grande',
   'settings.show_fps': 'Mostrar rendimiento',
+  'settings.reset_defaults': 'Restaurar valores',
   'settings.tutorial': 'Repetir avisos',
   'settings.tutorial_done': 'Avisos reactivados',
   'settings.data': 'Datos de la partida',

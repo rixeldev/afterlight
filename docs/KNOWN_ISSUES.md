@@ -13,10 +13,14 @@ is proven and what is not.
    30 FPS).
 2. **iOS.** No macOS/Xcode in the build environment. The scene uses GLSL ES 1.0 and
    platform-neutral APIs, but an archive has not been produced.
-3. **Release minification.** The first release APK crashed creating `GLView` because R8 removed a
-   reflected constructor. `expo-build-properties` now injects keep rules for
-   `expo.modules.gl.**` and all `View` constructors. This is verified on device and must stay in
-   place for every release build.
+3. **Release-only rendering pitfalls.**
+   - The first release APK crashed creating `GLView` because R8 removed a reflected constructor.
+     `expo-build-properties` now injects keep rules for `expo.modules.gl.**` and all `View`
+     constructors.
+   - Opening the map crashed release builds because Fabric tried to register `react-native-svg`'s
+     `<Stop>` as a native view. SVG gradients were removed (solid map fills + a PNG vignette).
+   Both were reproduced and fixed on the Galaxy S22+; they must be regression-tested on every
+   release build.
 4. **Full 5–20 minute playthrough on hardware.** The chapter is covered by unit/integration tests,
    not by a recorded device session.
 5. **Accessibility audit.** Large text, reduced motion and left-handed layout are implemented;

@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useSettings, useT } from '../../state/settingsStore';
 import { useSession } from '../../state/sessionStore';
 import { ensureSaveService } from '../../services/storage';
+import { DEFAULT_SETTINGS } from '../../services/storage/saveService';
 
 export function SettingsPanel() {
   const { t } = useT();
@@ -140,7 +141,30 @@ export function SettingsPanel() {
 
         {phase === 'game' ? (
           <>
-            <Section title={t('settings.data')} />
+            <View style={styles.buttonRow}>
+          <Button
+            label={t('settings.reset_defaults')}
+            variant="ghost"
+            compact
+            icon="rotate"
+            onPress={() =>
+              update({
+                graphics: DEFAULT_SETTINGS.graphics,
+                musicVolume: DEFAULT_SETTINGS.musicVolume,
+                sfxVolume: DEFAULT_SETTINGS.sfxVolume,
+                ambienceVolume: DEFAULT_SETTINGS.ambienceVolume,
+                cameraSensitivity: DEFAULT_SETTINGS.cameraSensitivity,
+                haptics: DEFAULT_SETTINGS.haptics,
+                reducedMotion: DEFAULT_SETTINGS.reducedMotion,
+                largeText: DEFAULT_SETTINGS.largeText,
+                leftHanded: DEFAULT_SETTINGS.leftHanded,
+                showFps: DEFAULT_SETTINGS.showFps,
+              })
+            }
+          />
+        </View>
+
+        <Section title={t('settings.data')} />
             <View style={styles.dataRow}>
               <View>
                 <AppText variant="body">{t('settings.storage_used')}</AppText>

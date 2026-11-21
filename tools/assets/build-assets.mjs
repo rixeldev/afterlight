@@ -94,6 +94,7 @@ if (has('rsvg-convert')) {
     console.log(`  ✓ ${out.replace(ROOT + '/', '')} (${width}x${height})`);
   };
   raster('menu_keyart.svg', join(BRAND_OUT, 'branding/menu_keyart.png'), 1600, 900);
+  raster('vignette.svg', join(BRAND_OUT, 'branding/vignette.png'), 1600, 900);
   raster('icon.svg', join(BRAND_OUT, 'icon.png'), 1024, 1024);
   raster('icon_foreground.svg', join(BRAND_OUT, 'android-icon-foreground.png'), 1024, 1024);
   raster('icon_monochrome.svg', join(BRAND_OUT, 'android-icon-monochrome.png'), 1024, 1024);

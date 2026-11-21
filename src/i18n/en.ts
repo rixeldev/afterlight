@@ -383,6 +383,7 @@ export const en = {
   'settings.reduced_motion': 'Reduce motion',
   'settings.large_text': 'Larger text',
   'settings.show_fps': 'Show performance overlay',
+  'settings.reset_defaults': 'Restore defaults',
   'settings.tutorial': 'Replay hints',
   'settings.tutorial_done': 'Hints re-enabled',
   'settings.data': 'Journey data',

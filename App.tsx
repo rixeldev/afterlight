@@ -98,27 +98,29 @@ export default function App() {
   const ready = booted && settingsReady && (fontsLoaded || Boolean(fontError));
 
   return (
-    <SafeAreaProvider>
-      <StatusBar hidden />
-      <View style={styles.root}>
-        {!ready ? (
-          <BootScreen />
-        ) : phase === 'game' ? (
-          <GameScreen />
-        ) : (
-          <MainMenuScreen />
-        )}
-        <SettingsPanel />
-        <CreditsPanel />
-        {fatal ? (
-          <View style={styles.fatal}>
-            <AppText variant="caption" color={C.textMuted} align="center">
-              {fatal}
-            </AppText>
-          </View>
-        ) : null}
-      </View>
-    </SafeAreaProvider>
+    <AppBoundary>
+      <SafeAreaProvider>
+        <StatusBar hidden />
+        <View style={styles.root}>
+          {!ready ? (
+            <BootScreen />
+          ) : phase === 'game' ? (
+            <GameScreen />
+          ) : (
+            <MainMenuScreen />
+          )}
+          <SettingsPanel />
+          <CreditsPanel />
+          {fatal ? (
+            <View style={styles.fatal}>
+              <AppText variant="caption" color={C.textMuted} align="center">
+                {fatal}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      </SafeAreaProvider>
+    </AppBoundary>
   );
 }
 

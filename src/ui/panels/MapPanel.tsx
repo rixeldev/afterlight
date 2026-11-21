@@ -2,11 +2,9 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, {
   Circle,
-  Defs,
   Ellipse,
   G,
   Line,
-  LinearGradient,
   Path,
   Polygon,
   Rect,
@@ -65,17 +63,7 @@ export function MapPanel() {
       <View style={styles.row}>
         <View style={styles.mapCard}>
           <Svg viewBox="-84 -84 168 168" width="100%" height="100%">
-            <Defs>
-              <LinearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#16261F" />
-                <stop offset="1" stopColor="#0D1B16" />
-              </LinearGradient>
-              <LinearGradient id="lake" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#33565A" />
-                <stop offset="1" stopColor="#1E3940" />
-              </LinearGradient>
-            </Defs>
-            <Rect x={-84} y={-84} width={168} height={168} fill="url(#ground)" rx={6} />
+            <Rect x={-84} y={-84} width={168} height={168} fill="#12211B" rx={6} />
             {Array.from({ length: 17 }).map((_, i) => (
               <G key={i} opacity={0.1}>
                 <Line x1={-80 + i * 10} y1={-80} x2={-80 + i * 10} y2={80} stroke="#9FB49A" strokeWidth={0.15} />
@@ -83,7 +71,7 @@ export function MapPanel() {
               </G>
             ))}
             <Circle cx={0} cy={0} r={REGION.playRadius} fill="none" stroke="#41584A" strokeWidth={0.5} strokeDasharray="2 2" />
-            <Ellipse cx={REGION.lake.x} cy={REGION.lake.z} rx={REGION.lake.rx} ry={REGION.lake.rz} fill="url(#lake)" opacity={0.95} />
+            <Ellipse cx={REGION.lake.x} cy={REGION.lake.z} rx={REGION.lake.rx} ry={REGION.lake.rz} fill="#2C4C4F" opacity={0.95} />
             <Ellipse cx={REGION.lake.x} cy={REGION.lake.z} rx={REGION.lake.rx + 2.4} ry={REGION.lake.rz + 2.4} fill="#3E5340" opacity={0.35} />
             {/* forest texture */}
             {forest.map((tree, i) => (

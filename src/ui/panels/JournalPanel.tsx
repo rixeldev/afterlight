@@ -51,7 +51,7 @@ export function JournalPanel() {
               <View style={styles.chapterRing}>
                 <AppText variant="heading">{Math.round(chapterPct * 100)}%</AppText>
                 <AppText variant="micro" color={C.textMuted}>
-                  1 / 1
+                  {completedCount}/{QUEST_STEPS.length}
                 </AppText>
               </View>
             </View>

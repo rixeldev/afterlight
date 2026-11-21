@@ -63,6 +63,11 @@ behaviour or context lifecycle on real hardware.
   ripples, instanced contact shadows, shadows on the Balanced preset and a cinematic vignette.
 - **Camera & life.** Camera pulls in before trunks, rocks, the cabin and structures; the survivor's
   step height is smoothed. Birds circle the valley by day and fireflies drift around camp at night.
+- **Second release crash fixed.** Opening the map killed release builds inside
+  `react-native-svg`: Fabric treated the `<Stop>` gradient child as a native host component
+  (`View config getter callback for component 'stop'…`). Gradients were replaced by solid map
+  fills and a PNG vignette; the app is also wrapped in a top-level error boundary so a panel
+  failure degrades to a reload screen instead of a native crash.
 - **Settings layout.** The custom slider was re-laid out with a measured track, a proper thumb and
   a dedicated value column; the sheet content is capped and centred.
 
