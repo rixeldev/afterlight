@@ -3,12 +3,14 @@ import {
   Animated,
   PanResponder,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { C, FONT, R, SP } from '../theme';
 import { Icon } from '../components/Icon';
 import { AppText, ProgressRing } from '../components/Primitives';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useSettings, useT } from '../../state/settingsStore';
 import { isSimulationPaused, useSession, type Panel } from '../../state/sessionStore';
 import { inputState, rotateCamera, setMove } from '../../game/runtime/input';
@@ -344,7 +346,10 @@ export function BuildControls() {
   const selectBuild = useSession((s) => s.selectBuild);
   const ghost = snapshot?.build;
   const structures = snapshot?.structures ?? [];
+  const removeStructure = useSession((s) => s.removeStructure);
   const [selected, setSelected] = useState(ghost?.defId ?? 'campfire');
+  const [manageOpen, setManageOpen] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
 
   useEffect(() => {
     if (ghost?.defId) setSelected(ghost.defId);
@@ -460,7 +465,64 @@ export function BuildControls() {
         <AppText variant="micro" color={C.textMuted} align="center" style={{ marginTop: 4 }}>
           {t('build.move_hint')}
         </AppText>
+
+        {structures.length > 0 ? (
+          <Pressable
+            onPress={() => setManageOpen((v) => !v)}
+            style={styles.manageToggle}
+            accessibilityLabel={t('build.built')}
+          >
+            <Icon name="home" size={13} color={C.textMuted} />
+            <AppText variant="micro" color={C.textMuted}>
+              {t('build.built')} · {structures.length}
+            </AppText>
+            <Icon name={manageOpen ? 'chevron_down' : 'chevron_right'} size={12} color={C.textMuted} />
+          </Pressable>
+        ) : null}
+
+        {manageOpen ? (
+          <ScrollView style={styles.manageList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+            {structures.map((s) => (
+              <View key={s.id} style={styles.manageRow}>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="caption" color={C.text}>
+                    {t(`structure.${s.defId}.name`)}
+                  </AppText>
+                  <AppText variant="micro" color={C.textMuted}>
+                    {(s.pending ?? 0) > 0
+                      ? t('build.production_ready', { count: s.pending ?? 0 })
+                      : t('build.built')}
+                  </AppText>
+                </View>
+                <Pressable
+                  onPress={() => setPendingRemove(s.id)}
+                  style={styles.manageRemove}
+                  accessibilityLabel={t('build.remove')}
+                >
+                  <Icon name="trash" size={14} color={C.danger} />
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
       </View>
+
+      <ConfirmDialog
+        visible={pendingRemove !== null}
+        title={t('build.remove_title', {
+          name: pendingRemove
+            ? t(`structure.${structures.find((s) => s.id === pendingRemove)?.defId ?? 'campfire'}.name`)
+            : '',
+        })}
+        body={t('build.remove_body')}
+        confirmLabel={t('build.remove')}
+        destructive
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={() => {
+          if (pendingRemove) removeStructure(pendingRemove);
+          setPendingRemove(null);
+        }}
+      />
     </View>
   );
 }
@@ -653,6 +715,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carousel: { flexDirection: 'row', gap: 6 },
+  manageToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 4,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    marginTop: 2,
+  },
+  manageList: { gap: 4, maxHeight: 132 },
+  manageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: R.sm,
+    backgroundColor: C.glass,
+  },
+  manageRemove: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(217,129,112,0.35)',
+    backgroundColor: C.dangerDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   buildCard: {
     flex: 1,
     height: 54,

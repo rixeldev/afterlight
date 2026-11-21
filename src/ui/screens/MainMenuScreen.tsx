@@ -133,7 +133,7 @@ export function MainMenuScreen() {
           </Animated.View>
         </View>
 
-        <View style={styles.right}>
+        {!compact ? <View style={styles.right}>
           <View style={styles.journeyCard}>
             <View style={styles.journeyHeader}>
               <View style={styles.journeyIcon}>
@@ -199,7 +199,7 @@ export function MainMenuScreen() {
           <AppText variant="micro" color={C.textMuted} align="center" style={{ marginTop: 10 }}>
             {t('menu.autosave_note')}
           </AppText>
-        </View>
+        </View> : null}
       </Animated.View>
 
       <ConfirmDialog

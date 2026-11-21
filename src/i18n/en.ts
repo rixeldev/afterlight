@@ -147,6 +147,8 @@ export const en = {
   'objective.return_home': 'Return home',
 
   'inv.title': 'Pack',
+  'storage.title': 'Storage',
+  'storage.empty': 'Storage is empty. Craft a crate to keep supplies safe.',
   'inv.capacity': '{used} of {total} slots',
   'inv.empty': 'Your pack is empty. The forest is generous.',
   'inv.use': 'Use',

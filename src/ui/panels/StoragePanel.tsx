@@ -30,7 +30,7 @@ export function StoragePanel() {
   const storage = useMemo(() => aggregate(snapshot?.storage), [snapshot?.storage]);
 
   return (
-    <Sheet visible={open} onClose={close} title={t('build.storage')} subtitle={t('interact.storage')} closeLabel={t('common.close')}>
+    <Sheet visible={open} onClose={close} title={t('storage.title')} subtitle={t('interact.storage')} closeLabel={t('common.close')}>
       <View style={styles.cols}>
         <Column
           title={t('inv.title')}
@@ -44,7 +44,7 @@ export function StoragePanel() {
           empty={t('inv.empty')}
         />
         <Column
-          title={t('build.storage')}
+          title={t('storage.title')}
           count={snapshot?.storageSlots ?? 0}
           total={snapshot?.storageSlots ?? 0}
           items={storage}
@@ -52,7 +52,7 @@ export function StoragePanel() {
           onAction={(id) => withdraw(id, 1)}
           onAll={(id) => withdraw(id, 9999)}
           nameOf={nameOf}
-          empty={t('toast.storage_full')}
+          empty={t('storage.empty')}
         />
       </View>
     </Sheet>

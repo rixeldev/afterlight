@@ -146,6 +146,8 @@ export const es: Dictionary = {
   'objective.return_home': 'Vuelve a casa',
 
   'inv.title': 'Mochila',
+  'storage.title': 'Almacén',
+  'storage.empty': 'El almacén está vacío. Fabrica una caja para guardar suministros.',
   'inv.capacity': '{used} de {total} huecos',
   'inv.empty': 'Tu mochila está vacía. El bosque es generoso.',
   'inv.use': 'Usar',
