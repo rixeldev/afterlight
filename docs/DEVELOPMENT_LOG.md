@@ -111,6 +111,12 @@ Environment: Android API 37 x86_64, SwiftShader software GL, debug APK, Metro de
 - Honest fallback UI if the GL renderer fails, with a “reduce graphics and retry” path.
 - **Pending:** release-build profiling, memory-pressure test, device QA matrix, screenshots.
 
+### Phase 8 — Release preparation (Android) — Partial
+
+- Release AAB built locally with the gitignored upload keystore and verified with `jarsigner`.
+- R8, resource shrinking and `lintVitalRelease` pass; ABIs are arm64-v8a + armeabi-v7a.
+- Upload to Play Console and the iOS archive remain pending (account access / macOS).
+
 ### Phase 7/8 — Deferred
 
 Silent City, Frostfall, survivors/jobs, advanced combat, iOS archive. The locked gate and story

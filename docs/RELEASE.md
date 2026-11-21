@@ -92,6 +92,20 @@ npx eas-cli build --platform android --profile production
 
 EAS never reads `keystore.properties`; the credentials live in Expo's encrypted store.
 
+### Verified locally
+
+On 2026-11-21 the full path was exercised on this machine:
+
+- `npx expo prebuild --platform android --clean`
+- `node tools/android/configure-signing.mjs`
+- `./gradlew bundleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a`
+- `jarsigner -verify app-release.aab` → **jar verified**
+- Bundle: 34 MB, `base/lib/arm64-v8a` + `base/lib/armeabi-v7a`, no credential files inside.
+- Release minification (R8) and `lintVitalRelease` passed.
+
+The AAB has **not** been uploaded to Play Console; that requires the account and a versionCode
+bump for every subsequent submission.
+
 ---
 
 ## Play Console checklist

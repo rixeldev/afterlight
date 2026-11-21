@@ -54,7 +54,7 @@ and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
 
 **Exploration & story**
 - Three points of interest with discoveries, journal entries and authored audio-log fragments.
-- Seven-step opening chapter with rewards, optional combat objective and a cinematic finale.
+- Seven-step opening chapter with rewards, an authored climax and a cinematic finale.
 - A locked route teaser to the Silent City (next chapter).
 
 **Threat**
@@ -162,7 +162,6 @@ versioning and the iOS path.
 ```text
 App.tsx                     boot → menu → game shell
 src/
-  app/                      (reserved for navigation growth)
   data/                     items, recipes, structures, quests, POIs, story
   game/
     assets/generated/       compiled GLB, texture and icon modules (build output)

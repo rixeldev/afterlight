@@ -193,6 +193,7 @@ export const useSession = create<SessionState>((set, get) => ({
       snapshot: engine.snapshot(),
       saveInfo: infoFromSave(engine.state),
     });
+    set({ toasts: pushToast(get().toasts, 'story', translate(localeNow(), 'intro.wake'), 'sunrise') });
     await get().saveNow('manual');
   },
 

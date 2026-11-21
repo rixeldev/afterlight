@@ -20,6 +20,18 @@ npx expo export --platform android --output-dir /tmp/afterlight-export   # Metro
 | `world.test.ts` | determinism, resource coverage, camp clearing, no underwater nodes, lakes/hills |
 | `i18n.test.ts` | key parity EN/ES, placeholders, interpolation, clock formatting |
 
+## Android emulator notes
+
+- React Native 0.88 may package only `arm64-v8a` and `armeabi-v7a` native libraries even when
+  `reactNativeArchitectures` lists x86_64. For an x86_64 AVD, add
+  `ndk { abiFilters 'x86_64' }` to the generated `android/app/build.gradle` (never commit it) or
+  build with `-PreactNativeArchitectures=x86_64`, then verify with `unzip -l app-debug.apk | grep x86_64`.
+- `expo-gl` on SwiftShader emulators can take tens of seconds to create a context and can stop
+  creating contexts entirely after repeated restarts or display resizes. The app shows its retry
+  screen in that case; use a physical device for rendering and frame-pacing tests.
+- Debug builds ask for Android 16's nearby-devices permission because of Metro/dev tooling. Release
+  builds do not need it.
+
 ## Manual device checklist
 
 Record: device model, OS, build type, FPS observations, crashes, battery/thermal notes.

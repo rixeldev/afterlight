@@ -9,6 +9,7 @@ export const en = {
   'app.version': 'Version {version}',
   'app.offline': 'Offline-first · No ads · No tracking',
 
+  'intro.wake': 'You wake in Greenhaven with a dry throat and no memory of the road. Start with what the valley gives you.',
   'boot.tip.1': 'Hold the interact button to gather. Tools make every swing count.',
   'boot.tip.2': 'The homestead is safe. Nothing hunts you inside the clearing.',
   'boot.tip.3': 'Cook berries and boil water at a campfire before you travel far.',

@@ -8,6 +8,7 @@ export const es: Dictionary = {
   'app.version': 'Versión {version}',
   'app.offline': 'Sin conexión · Sin anuncios · Sin rastreo',
 
+  'intro.wake': 'Despiertas en Greenhaven con la garganta seca y sin recuerdo del camino. Empieza con lo que el valle te da.',
   'boot.tip.1': 'Mantén el botón de acción para recolectar. Las herramientas hacen que cada golpe cuente.',
   'boot.tip.2': 'El claro es seguro. Nada te caza dentro del campamento.',
   'boot.tip.3': 'Cocina bayas y hierve agua en una hoguera antes de ir lejos.',
