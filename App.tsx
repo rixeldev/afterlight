@@ -26,7 +26,7 @@ LogBox.ignoreLogs([
   'THREE.Clock',
   'WEBGL_lose_context',
   'ImageBackground is deprecated',
-  'Require cycle',
+  'Require cycle: src/ui/hud/Controls.tsx',
 ]);
 
 class AppBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
