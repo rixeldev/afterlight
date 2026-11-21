@@ -8,6 +8,10 @@ signal into the woods, and find out what the light left behind.
 
 ![Greenhaven key art](assets/branding/menu_keyart.png)
 
+| Main menu | In the valley |
+| --- | --- |
+| ![Main menu](docs/screenshots/main-menu.png) | ![Greenhaven](docs/screenshots/greenhaven.png) |
+
 ---
 
 ## Status
@@ -19,8 +23,10 @@ persistent save, a seven-step opening chapter, a night threat, and a complete au
 presentation. See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md) for exact per-phase status
 and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
 
-> Physical-device QA and the iOS build are the remaining gates before a store submission.
-> Everything else in the slice is implemented, not mocked.
+> **On-device status:** the debug build boots, loads the world, accepts touch input, runs the
+> simulation, saves and resumes on an Android API 37 emulator (x86_64, software GL). Frame pacing
+> on that emulator is not representative. Physical-device QA and the iOS build remain the gates
+> before submission; see [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 ---
 
@@ -76,6 +82,7 @@ and [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for what is not yet verified.
 | Runtime | Expo SDK 58 · React Native 0.88 · React 19.3 |
 | Language | TypeScript strict |
 | 3D | Three.js 0.187 · `@react-three/fiber` (native) · `expo-gl` |
+| Simulation | Fixed 50 ms timestep on its own interval, decoupled from rendering |
 | State | Zustand for UI/application state; the simulation is plain TypeScript |
 | Persistence | `expo-sqlite` with Zod-validated saves |
 | Audio | `expo-audio` |
@@ -113,6 +120,15 @@ npm run lint       # ESLint, zero warnings
 npm run assets:build   # regenerate icons/models/textures from docs/ kit
 npm run audio:build    # re-synthesise all audio
 ```
+
+### Pinned native packages
+
+`expo-sqlite@58.0.10` and `expo-haptics@58.0.4` are pinned **exactly**. Their later patch releases
+58.0.18 / 58.0.8 shipped `expo-module.config.json` files without the `android.modules` entry, so
+Expo's module list omitted them and `requireNativeModule` failed at runtime. `package.json` also
+excludes them from `expo install --check` so a routine dependency bump cannot reintroduce the bug.
+Upgrade only after verifying `node_modules/expo/android/build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt`
+contains `SQLiteModule` and `HapticsModule`.
 
 ---
 

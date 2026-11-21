@@ -14,6 +14,7 @@ Living document. Newest entries on top.
 | Expo development build, TypeScript strict, lint, tests | Done |
 | Three.js 0.187 + `expo-gl` 58 + `@react-three/fiber` 9.8 native bridge | Done |
 | GLB loading proven at the Metro/bundle level from embedded bytes | Done |
+| GL rendering + GLB proven on an Android emulator (API 37, x86_64, SwiftShader) | Done |
 | GL rendering + GLB proven on a **physical** device | **Pending** — see Known issues |
 
 The chosen bridge is `@react-three/fiber/native`, the maintained Expo-GL integration. The four
@@ -22,8 +23,24 @@ starter-kit GLBs are inlined as Base64 modules and parsed with `GLTFLoader.parse
 which are the least portable part of Three.js on React Native.
 
 **Compatibility gate:** `npx expo export --platform android` produces a valid Hermes bundle with
-the full scene graph. This proves module resolution, Metro asset handling and GLTF/Loader
-inclusion. It does **not** prove frame pacing or context lifecycle; that needs hardware.
+the full scene graph. A debug APK was installed on an API 37 x86_64 emulator: the boot flow,
+menu, new journey, 3D world, GLB models, instanced vegetation, HUD, joystick input and save/continue
+all ran. That proves the integration end to end. It does **not** prove frame pacing, thermal
+behaviour or context lifecycle on real hardware.
+
+### Compatibility findings that cost real time (fixed)
+
+1. **Two R3F stores.** Mixing `@react-three/fiber` (CJS on native) with `@react-three/fiber/native`
+   (ESM) produced a canvas that rendered one frozen frame: the frame loop had no subscribers.
+   Every renderer import now comes from the native entry.
+2. **Three's CJS deprecation shim** calls `process.emitWarning` at import, which React Native's
+   `process` shim does not implement. `src/polyfills.ts` installs it and is imported first.
+3. **Expo module manifests regressed** in `expo-sqlite@58.0.18` and `expo-haptics@58.0.8`: their
+   `expo-module.config.json` dropped `android.modules`, so the generated module list omitted them
+   and `requireNativeModule` threw. Pinned to 58.0.10 / 58.0.4 and excluded from version checks.
+4. **Render-coupled simulation** froze the clock on slow devices. Moved to a fixed 50 ms loop.
+5. **Silent GL failure.** The emulator eventually could not create a GL context after a display
+   resize; the app now shows a retry / reduce-graphics screen after 60 s instead of a black screen.
 
 ### Phase 1 — Movement prototype — Done
 

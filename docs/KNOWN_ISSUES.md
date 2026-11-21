@@ -12,8 +12,10 @@ is proven and what is not.
    `expo-gl` context loss must still be measured on a mid-range phone (target: stable 30 FPS).
 2. **iOS.** No macOS/Xcode in the build environment. The scene uses GLSL ES 1.0 and
    platform-neutral APIs, but an archive has not been produced.
-3. **Emulator smoke test.** A local API 37 emulator with SwiftShader is used as a first smoke
-   test. Software GL is not representative of device performance.
+3. **Emulator smoke test.** A local API 37 x86_64 emulator with SwiftShader booted the game and
+   rendered the world. After changing the virtual display size the emulator could no longer create
+   a GL context (the app correctly showed its retry screen). A fresh AVD or physical device is
+   required for further GL testing; this is an emulator/driver limitation, not a game crash.
 4. **Full 5–20 minute playthrough on hardware.** The chapter is covered by unit/integration tests,
    not by a recorded device session.
 5. **Accessibility audit.** Large text, reduced motion and left-handed layout are implemented;

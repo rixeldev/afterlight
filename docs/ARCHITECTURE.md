@@ -17,23 +17,36 @@ the React tree.
 ## Frame flow
 
 ```
-Touch handlers ──▶ src/game/runtime/input.ts        (plain mutable object, no re-render)
+Touch handlers ──▶ src/game/runtime/input.ts          (plain mutable object, no re-render)
                          │
-R3F useFrame ──▶ GameEngine.tick(dt, input) ──▶ simulation state
-                         │                         │
-                         │                         ├──▶ events queue (toasts, sfx, haptics, quest)
-                         │                         └──▶ snapshot()
+SimulationLoop (50 ms) ──▶ GameEngine.tick(dt, input) ──▶ simulation state
+   fixed 50 ms steps, capped 0.5 s catch-up               │
+                         │                                 ├──▶ events queue (toasts, sfx, haptics, quest)
+                         │                                 └──▶ snapshot()
                          ▼
-             Three.js scene reads player/threat/node/structure state directly
+R3F useFrame ──▶ reads player/threat/node/structure state and draws the frame
                          │
 GameScreen interval (130 ms) ──▶ session.sync() ──▶ Zustand snapshot ──▶ HUD/panels
 ```
 
-- `dt` is clamped to 80 ms. Backgrounding the app pauses the loop, so needs never drain in one
-  huge jump.
+- **The simulation does not depend on the render loop.** A 50 ms interval integrates movement,
+  needs, production, threat AI and the world clock in fixed steps. A device rendering at 12 FPS
+  still advances time correctly; a device stuck at 0.5 FPS (software GL) still responds to input.
+- Catch-up is capped at 0.5 s per tick, and the loop resets its clock when the app returns to the
+  foreground, so needs never drain for the full wall-clock time spent backgrounded.
 - When any panel is open the loop calls `tick(0)`, which freezes time and needs while still
   recomputing the interaction target and camera yaw.
 - The canvas stays mounted for the whole game session; menus are overlays, never scene rebuilds.
+- If `expo-gl` cannot create a context within 60 s, a watchdog replaces the black surface with a
+  retry / reduce-graphics screen instead of leaving the player in the dark.
+
+### R3F resolution on native
+
+All renderer imports (`Canvas`, `useFrame`, `useThree`) come from **`@react-three/fiber/native`**.
+Metro resolves the core package to its CommonJS build on native while the native Canvas uses the
+ESM build; mixing them creates two Zustand stores, the canvas renders one frame and `useFrame`
+never fires. Keeping one import entry is load-bearing. The same reason requires the
+`process.emitWarning` shim in `src/polyfills.ts`: Three's CommonJS shim calls it at import.
 
 ---
 
