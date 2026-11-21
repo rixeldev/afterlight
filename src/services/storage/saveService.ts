@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   musicVolume: 0.55,
   sfxVolume: 0.8,
   ambienceVolume: 0.7,
-  cameraSensitivity: 1,
+  cameraSensitivity: 0.85,
   haptics: true,
   reducedMotion: false,
   largeText: false,

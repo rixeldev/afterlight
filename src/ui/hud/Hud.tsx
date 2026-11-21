@@ -7,11 +7,12 @@ import { AppText, Button, MeterBar, ProgressRing } from '../components/Primitive
 import { useSettings, useT } from '../../state/settingsStore';
 import { currentTutorialHint, useSession } from '../../state/sessionStore';
 import { xpForNextLevel } from '../../game/progression/progression';
-import { REGION, POIS } from '../../data/world';
 import { questStep } from '../../data/quests';
-import { ActionCluster, BuildControls, CameraDragLayer, Dock, Joystick } from './Controls';
+import { ActionCluster, AutoButton, BuildControls, Dock, QuickBar } from './Controls';
+import { Radar } from './Radar';
 import { formatClock } from '../../i18n';
 import { renderStats } from '../../game/rendering/stats';
+import { THREAT } from '../../game/engine/constants';
 
 export function Hud() {
   const { t } = useT();
@@ -39,13 +40,11 @@ export function Hud() {
   }, [showFps]);
 
   if (!snapshot) return null;
- const compact = width < 820;
   const hint = tutorialVisible && !rendererFailed ? currentTutorialHint(snapshot) : null;
+  const compact = width < 780;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <CameraDragLayer />
-
       {/* damage vignette */}
       <View
         pointerEvents="none"
@@ -64,64 +63,52 @@ export function Hud() {
         </View>
       ) : null}
 
-      {/* ── top cluster ─────────────────────────────────────────────── */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8, paddingLeft: insets.left + 14, paddingRight: insets.right + 14 }]} pointerEvents="box-none">
-        <VitalsCard />
-        <QuestTracker onPress={() => openPanel('journal')} hidden={compact && snapshot.threat !== null} />
-        <View style={styles.topRight} pointerEvents="box-none">
-          {!compact ? <Compass /> : null}
-          <TimeChip />
-          <Pressable
-            onPress={() => openPanel('pause')}
-            style={styles.pauseButton}
-            accessibilityLabel={t('pause.title')}
-          >
-            <Icon name="pause" size={17} color={C.text} />
-          </Pressable>
-        </View>
+      <View
+        style={[
+          styles.topBar,
+          { paddingTop: insets.top + 8, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 },
+        ]}
+        pointerEvents="box-none"
+      >
+        <ProfileCard />
+        <ContextCard onPress={() => openPanel('journal')} />
+        <RadarCluster onPause={() => openPanel('pause')} onMap={() => openPanel('map')} compact={compact} />
       </View>
 
-      {showFps ? (
-        <View style={[styles.fps, { top: insets.top + 108, left: insets.left + 16 }]} pointerEvents="none">
-          <AppText variant="micro" color={C.textMuted}>
-            {t('hud.fps', { fps })} · {draws} dc
-          </AppText>
-        </View>
-      ) : null}
+      {snapshot.goal && !compact ? null : null}
 
-      {snapshot.threat ? (
-        <View style={[styles.threatChip, { top: insets.top + 8 }]} pointerEvents="none">
-          <View style={styles.threatDot} />
-          <AppText variant="caption" color="#F0B3A4">
-            {t('threat.name')} · {Math.round(snapshot.threat.distance)} m
-          </AppText>
-        </View>
-      ) : null}
+      <ToastStack top={insets.top + 128} />
 
       {savePulse ? (
-        <View style={[styles.savePill, { top: insets.top + 8 }]} pointerEvents="none">
-          <Icon name="check" size={12} color={C.success} />
+        <View style={[styles.savePill, { top: insets.top + 118 }]} pointerEvents="none">
+          <Icon name="check" size={11} color={C.success} />
           <AppText variant="micro" color={C.success}>
             {t('hud.autosaved')}
           </AppText>
         </View>
       ) : null}
 
-      <ToastStack top={insets.top + 96} />
+      {showFps ? (
+        <View style={[styles.fps, { top: insets.top + 128, left: insets.left + 16 }]} pointerEvents="none">
+          <AppText variant="micro" color={C.textMuted}>
+            {t('hud.fps', { fps })} · {draws} dc
+          </AppText>
+        </View>
+      ) : null}
 
-      {/* ── bottom controls ─────────────────────────────────────────── */}
       {panel === 'build' ? (
-        <BuildControls />
+        <BuildControls leftHanded={leftHanded} />
       ) : (
         <>
-          <Joystick leftHanded={leftHanded} />
-          <ActionCluster leftHanded={leftHanded} onRest={() => setRestOpen(true)} />
+          <AutoButton leftHanded={leftHanded} />
+          <QuickBar />
           <Dock />
+          <ActionCluster leftHanded={leftHanded} onRest={() => setRestOpen(true)} />
         </>
       )}
 
       {hint ? (
-        <TutorialCoach hintKey={hint.hintKey} bottomOffset={panel === 'build' ? 250 : 190} />
+        <TutorialCoach hintKey={hint.hintKey} bottomOffset={panel === 'build' ? 220 : 160} />
       ) : null}
 
       <RestDialog open={restOpen} onClose={() => setRestOpen(false)} />
@@ -129,7 +116,7 @@ export function Hud() {
   );
 }
 
-function VitalsCard() {
+function ProfileCard() {
   const { t } = useT();
   const snapshot = useSession((s) => s.snapshot);
   const player = snapshot?.player;
@@ -137,69 +124,87 @@ function VitalsCard() {
   if (!player) return null;
   const xpNeeded = xpForNextLevel(player.level);
   const xpProgress = Math.min(1, player.xp / xpNeeded);
-  const totalInv = snapshot?.inventory.slots.reduce((n, s) => n + (s ? 1 : 0), 0) ?? 0;
+  const used = snapshot?.inventory.slots.filter(Boolean).length ?? 0;
   const cap = snapshot?.capacity ?? 24;
   return (
-    <View style={styles.vitals} pointerEvents="none">
-      <View style={styles.vitalsRow}>
-        <ProgressRing progress={xpProgress} size={44} stroke={3} color={C.accent} track="rgba(233,240,226,0.14)">
+    <View style={styles.profile} pointerEvents="none">
+      <View style={styles.profileTop}>
+        <ProgressRing progress={xpProgress} size={40} stroke={3} color={C.accent} track="rgba(233,240,226,0.14)">
           <AppText variant="label" color={C.text} style={{ fontFamily: FONT.display }}>
             {player.level}
           </AppText>
         </ProgressRing>
-        <View style={{ flex: 1, gap: 4 }}>
-          <View style={styles.vitalLine}>
-            <Icon name="health" size={14} color={C.health} />
-            <MeterBar value={player.health} color={C.health} height={6} style={{ flex: 1 }} />
-            <AppText variant="micro" color={C.textMuted} style={{ width: 24, textAlign: 'right' }}>
-              {Math.round(player.health)}
-            </AppText>
-          </View>
-          <View style={styles.vitalLine}>
-            <Icon name="food" size={13} color={C.hunger} />
-            <MeterBar value={player.hunger} color={C.hunger} height={4} style={{ flex: 1 }} />
-            <Icon name="water" size={13} color={C.thirst} />
-            <MeterBar value={player.thirst} color={C.thirst} height={4} style={{ flex: 1 }} />
-          </View>
-          <View style={styles.vitalLine}>
-            <Icon name="energy" size={13} color={C.stamina} />
-            <MeterBar value={player.stamina} color={C.stamina} height={4} style={{ flex: 1 }} />
-            <AppText variant="micro" color={C.textMuted}>
-              {totalInv}/{cap}
-            </AppText>
-          </View>
+        <View style={{ flex: 1 }}>
+          <AppText variant="label" color={C.text} numberOfLines={1}>
+            {t('char.title')}
+          </AppText>
+          <AppText variant="micro" color={C.textMuted}>
+            {t('hud.level', { level: player.level })} · {used}/{cap}
+          </AppText>
         </View>
       </View>
-      {saving ? (
-        <AppText variant="micro" color={C.textMuted} style={{ marginTop: 4 }}>
-          {t('hud.autosaving')}
+      <View style={styles.healthRow}>
+        <Icon name="health" size={13} color="#9ED08C" />
+        <MeterBar value={player.health} color="#8FCB7E" height={8} style={{ flex: 1 }} />
+        <AppText variant="label" color="#C7E5BC" style={{ width: 30, textAlign: 'right' }}>
+          {Math.round(player.health)}
         </AppText>
-      ) : null}
+      </View>
+      <View style={styles.miniRow}>
+        <Icon name="food" size={12} color={C.hunger} />
+        <MeterBar value={player.hunger} color={C.hunger} height={4} style={{ flex: 1 }} />
+        <Icon name="water" size={12} color={C.thirst} />
+        <MeterBar value={player.thirst} color={C.thirst} height={4} style={{ flex: 1 }} />
+      </View>
+      <View style={styles.miniRow}>
+        <Icon name="energy" size={12} color={C.stamina} />
+        <MeterBar value={player.stamina} color={C.stamina} height={4} style={{ flex: 1 }} />
+        <AppText variant="micro" color={C.textMuted}>
+          {saving ? t('hud.autosaving') : `Lv ${player.level}`}
+        </AppText>
+      </View>
     </View>
   );
 }
 
-function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boolean }) {
+function ContextCard({ onPress }: { onPress: () => void }) {
   const { t } = useT();
   const snapshot = useSession((s) => s.snapshot);
-  if (!snapshot || hidden) return null;
+  if (!snapshot) return null;
+  const threat = snapshot.threat;
+
+  if (threat) {
+    return (
+      <View style={[styles.context, styles.enemyCard]} pointerEvents="none">
+        <View style={styles.contextHeader}>
+          <View style={styles.enemyDot} />
+          <AppText variant="micro" color="#F0B3A4" numberOfLines={1} style={{ flex: 1 }}>
+            {t('threat.name')} · {Math.round(threat.distance)} m
+          </AppText>
+          <AppText variant="micro" color={(threat.mode === 'chase' ? C.danger : C.warning) as string}>
+            {threat.mode.toUpperCase()}
+          </AppText>
+        </View>
+        <MeterBar value={threat.health} max={threat.maxHealth || THREAT.maxHealth} color={C.danger} height={7} style={{ marginTop: 4 }} />
+        <AppText variant="micro" color={C.textMuted} style={{ marginTop: 2 }}>
+          {Math.round(threat.health)} / {threat.maxHealth || THREAT.maxHealth}
+        </AppText>
+      </View>
+    );
+  }
+
   const step = snapshot.quest.activeStep ? questStep(snapshot.quest.activeStep) : null;
   if (!step) return null;
-  const done = step.objectives.filter((o) => {
-    const value = snapshot.quest.progress[`${step.id}:${o.id}`] ?? 0;
-    return value >= (o.amount ?? 1);
-  }).length;
   const total = step.objectives.length;
-  const next = step.objectives.find((o) => {
-    const value = snapshot.quest.progress[`${step.id}:${o.id}`] ?? 0;
-    return value < (o.amount ?? 1);
-  });
+  const done = step.objectives.filter((o) => (snapshot.quest.progress[`${step.id}:${o.id}`] ?? 0) >= (o.amount ?? 1)).length;
+  const next = step.objectives.find((o) => (snapshot.quest.progress[`${step.id}:${o.id}`] ?? 0) < (o.amount ?? 1));
   const nextValue = next ? snapshot.quest.progress[`${step.id}:${next.id}`] ?? 0 : 0;
+
   return (
-    <Pressable onPress={onPress} style={styles.questCard} accessibilityRole="button" accessibilityLabel={t('journal.title')}>
-      <View style={styles.questHeader}>
+    <Pressable onPress={onPress} style={styles.context} accessibilityRole="button" accessibilityLabel={t('journal.title')}>
+      <View style={styles.contextHeader}>
         <View style={styles.questDot} />
-        <AppText variant="micro" color={C.accent} numberOfLines={1}>
+        <AppText variant="micro" color={C.accent} numberOfLines={1} style={{ flex: 1 }}>
           {t('hud.tracked')}
         </AppText>
         <AppText variant="micro" color={C.textMuted}>
@@ -212,15 +217,9 @@ function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boole
       {next ? (
         <AppText variant="caption" color={C.textSecondary} numberOfLines={1}>
           {t(next.textKey)}
-          {next.amount && next.amount > 1
-            ? ` · ${Math.min(next.amount, Math.floor(nextValue))}/${next.amount}`
-            : ''}
+          {next.amount && next.amount > 1 ? ` · ${Math.min(next.amount, Math.floor(nextValue))}/${next.amount}` : ''}
         </AppText>
-      ) : (
-        <AppText variant="caption" color={C.success}>
-          {t('journal.completed')}
-        </AppText>
-      )}
+      ) : null}
       <View style={styles.questBar}>
         <View style={[styles.questFill, { width: `${(done / total) * 100}%` }]} />
       </View>
@@ -245,78 +244,30 @@ function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boole
   );
 }
 
-function Compass() {
-  const snapshot = useSession((s) => s.snapshot);
-  const tune = (deg: number) => ((deg % 360) + 360) % 360;
-  const player = snapshot?.player;
-  if (!snapshot || !player) return null;
-  const heading = tune((-snapshot.cameraYaw * 180) / Math.PI);
-  const cardinals = [
-    { label: 'N', bearing: 0 },
-    { label: 'E', bearing: 90 },
-    { label: 'S', bearing: 180 },
-    { label: 'W', bearing: 270 },
-  ];
-  const step = snapshot.quest.activeStep ? questStep(snapshot.quest.activeStep) : null;
-  let target: { x: number; z: number } | null = null;
-  if (step) {
-    if (step.id === 'signal' || step.id === 'recording') {
-      const poi = POIS.find((p) => p.id === 'ranger_camp');
-      if (poi) target = { x: poi.x, z: poi.z };
-    } else {
-      target = { x: REGION.camp.x, z: REGION.camp.z };
-    }
-  }
-  let questOffset: number | null = null;
-  if (target) {
-    const bearing = (Math.atan2(target.x - player.x, -(target.z - player.z)) * 180) / Math.PI;
-    let delta = tune(bearing - heading);
-    if (delta > 180) delta -= 360;
-    questOffset = Math.max(-62, Math.min(62, delta * 1.15));
-  }
-  return (
-    <View style={styles.compass} pointerEvents="none">
-      <View style={styles.compassLine} />
-      {cardinals.map((card) => {
-        let delta = tune(card.bearing - heading);
-        if (delta > 180) delta -= 360;
-        if (Math.abs(delta) > 62) return null;
-        return (
-          <AppText
-            key={card.label}
-            variant="micro"
-            color={Math.abs(delta) < 8 ? C.accent : C.textMuted}
-            style={{ position: 'absolute', left: 62 + delta * 1.15 - 5 }}
-          >
-            {card.label}
-          </AppText>
-        );
-      })}
-      {questOffset !== null ? (
-        <View style={{ position: 'absolute', left: 62 + questOffset, top: 18 }}>
-          <Icon name="chevron_down" size={11} color={C.accent} />
-        </View>
-      ) : null}
-      <View style={styles.compassNeedle} />
-    </View>
-  );
-}
-
-function TimeChip() {
+function RadarCluster({ onPause, onMap, compact }: { onPause: () => void; onMap: () => void; compact: boolean }) {
   const { t } = useT();
   const snapshot = useSession((s) => s.snapshot);
-  if (!snapshot) return null;
-  const isNight = snapshot.timeOfDay > 0.79 || snapshot.timeOfDay < 0.23;
+  const isNight = (snapshot?.timeOfDay ?? 0.5) > 0.79 || (snapshot?.timeOfDay ?? 0.5) < 0.23;
   return (
-    <View style={styles.timeChip} pointerEvents="none">
-      <Icon name={isNight ? 'moon' : 'sunrise'} size={15} color={isNight ? '#B9CBDA' : C.accent} />
-      <View>
-        <AppText variant="label" color={C.text} style={{ fontSize: 13 }}>
-          {formatClock(snapshot.minutes)}
-        </AppText>
-        <AppText variant="micro" color={C.textMuted} style={{ fontSize: 8 }}>
-          {t('hud.day', { day: snapshot.day })}
-        </AppText>
+    <View style={styles.radarCluster}>
+      <Radar onPress={onMap} />
+      <View style={styles.radarColumn}>
+        <Pressable onPress={onPause} style={styles.pauseButton} accessibilityLabel={t('pause.title')}>
+          <Icon name="pause" size={17} color={C.text} />
+        </Pressable>
+        {!compact ? (
+          <View style={styles.timePill} pointerEvents="none">
+            <Icon name={isNight ? 'moon' : 'sun'} size={13} color={isNight ? '#B9CBDA' : C.accent} />
+            <View>
+              <AppText variant="label" color={C.text} style={{ fontSize: 12 }}>
+                {formatClock(snapshot?.minutes ?? 0)}
+              </AppText>
+              <AppText variant="micro" color={C.textMuted} style={{ fontSize: 7 }}>
+                {t('hud.day', { day: snapshot?.day ?? 1 })}
+              </AppText>
+            </View>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -326,7 +277,7 @@ function ToastStack({ top }: { top: number }) {
   const toasts = useSession((s) => s.toasts);
   const { width } = useWindowDimensions();
   return (
-    <View style={[styles.toastWrap, { top, maxWidth: Math.min(420, width * 0.5) }]} pointerEvents="none">
+    <View style={[styles.toastWrap, { top, maxWidth: Math.min(400, width * 0.5) }]} pointerEvents="none">
       {toasts.map((toast) => (
         <Toast key={toast.id} icon={toast.icon} kind={toast.kind} text={toast.text} />
       ))}
@@ -346,7 +297,12 @@ function Toast({ text, icon, kind }: { text: string; icon?: string; kind: string
   const color =
     kind === 'warn' ? C.warning : kind === 'error' ? C.danger : kind === 'gain' ? C.text : kind === 'story' ? C.accent : C.textSecondary;
   return (
-    <Animated.View style={[styles.toast, { opacity, transform: [{ translateY: translate }], borderColor: kind === 'story' ? C.accentLine : C.border }]}>
+    <Animated.View
+      style={[
+        styles.toast,
+        { opacity, transform: [{ translateY: translate }], borderColor: kind === 'story' ? C.accentLine : C.border },
+      ]}
+    >
       <Icon name={icon ?? (kind === 'story' ? 'sparkle' : kind === 'warn' ? 'alert' : 'leaf')} size={14} color={color} />
       <AppText variant="caption" color={color} numberOfLines={2} style={{ flexShrink: 1 }}>
         {text}
@@ -425,72 +381,62 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
   },
-  topRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  vitals: {
-    minWidth: 214,
-    padding: 9,
-    borderRadius: R.lg,
-    backgroundColor: 'rgba(5,13,11,0.62)',
+  profile: {
+    width: 224,
+    padding: 8,
+    borderRadius: R.md,
+    backgroundColor: 'rgba(5,13,11,0.72)',
     borderWidth: 1,
     borderColor: C.border,
+    gap: 4,
   },
-  vitalsRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  vitalLine: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  questCard: {
+  profileTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  healthRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
+  miniRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  context: {
     flex: 1,
     maxWidth: 300,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: R.md,
-    backgroundColor: 'rgba(5,13,11,0.62)',
+    backgroundColor: 'rgba(5,13,11,0.72)',
     borderWidth: 1,
     borderColor: C.border,
     gap: 2,
   },
-  questHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  enemyCard: { borderColor: 'rgba(217,129,112,0.4)', backgroundColor: 'rgba(24,10,9,0.8)' },
+  contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   questDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.accent },
+  enemyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.danger },
   questBar: { height: 3, borderRadius: 2, backgroundColor: 'rgba(233,240,226,0.12)', marginTop: 4, overflow: 'hidden' },
   questFill: { height: 3, backgroundColor: C.accent, borderRadius: 2 },
-  goalDivider: { height: 1, backgroundColor: C.border, marginTop: 5 },
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
-  compass: {
-    width: 124,
-    height: 40,
-    borderRadius: R.pill,
-    backgroundColor: 'rgba(5,13,11,0.55)',
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  compassLine: { position: 'absolute', width: 96, height: 1, backgroundColor: 'rgba(233,240,226,0.18)' },
-  compassNeedle: { position: 'absolute', bottom: 4, width: 0, height: 0, borderLeftWidth: 4, borderRightWidth: 4, borderTopWidth: 5, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: C.accent },
-  timeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: R.md,
-    backgroundColor: 'rgba(5,13,11,0.62)',
-    borderWidth: 1,
-    borderColor: C.border,
-  },
+  goalDivider: { height: 1, backgroundColor: C.border, marginTop: 4 },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
+  radarCluster: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  radarColumn: { alignItems: 'center', gap: 6, paddingTop: 1 },
   pauseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: C.border,
-    backgroundColor: 'rgba(5,13,11,0.68)',
+    backgroundColor: 'rgba(5,13,11,0.72)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fps: { position: 'absolute' },
+  timePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    borderRadius: R.sm,
+    backgroundColor: 'rgba(5,13,11,0.72)',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   savePill: {
     position: 'absolute',
     alignSelf: 'center',
@@ -504,20 +450,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(147,192,140,0.3)',
   },
-  threatChip: {
-    position: 'absolute',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: R.pill,
-    backgroundColor: 'rgba(39,14,12,0.82)',
-    borderWidth: 1,
-    borderColor: 'rgba(217,129,112,0.45)',
-  },
-  threatDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.danger },
+  fps: { position: 'absolute' },
   threatEdge: { opacity: 0.8 },
   toastWrap: { position: 'absolute', alignSelf: 'center', gap: 5, alignItems: 'center' },
   toast: {
@@ -527,7 +460,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: R.pill,
-    backgroundColor: 'rgba(5,13,11,0.82)',
+    backgroundColor: 'rgba(5,13,11,0.85)',
     borderWidth: 1,
     maxWidth: '100%',
   },

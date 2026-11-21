@@ -6,7 +6,6 @@ import { getEngine } from '../runtime/session';
 import { inputState } from '../runtime/input';
 import { useSession } from '../../state/sessionStore';
 import { terrainHeight } from '../world/terrain';
-import { STRUCTURES } from '../../data/recipes';
 import { Environment } from './Environment';
 import { Terrain, Water } from './Terrain';
 import { Vegetation, useWorldRevision } from './Vegetation';
@@ -15,6 +14,7 @@ import {
   Lookout,
   RangerCamp,
   SilentGate,
+  Props,
   StarterCamp,
   Structures,
 } from './WorldProps';
@@ -22,6 +22,7 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { ThreatActor } from './ThreatActor';
 import { ImpactFx } from './ImpactFx';
 import { Wildlife } from './Wildlife';
+import { LakeLife } from './LakeLife';
 import { AppText, Button } from '../../ui/components/Primitives';
 import { C } from '../../ui/theme';
 import { useSettings, useT } from '../../state/settingsStore';
@@ -63,11 +64,11 @@ function FpsSampler() {
 
 function CameraRig() {
   const { camera } = useThree();
-  const look = useRef(new THREE.Vector3(0, 1.5, 0));
+  const look = useRef(new THREE.Vector3(0, 1.2, 0));
   const desired = useRef(new THREE.Vector3());
   const target = useRef(new THREE.Vector3());
   const initialized = useRef(false);
-  const allowedDistance = useRef(6.6);
+
   useFrame((state, delta) => {
     const engine = getEngine();
     if (!engine) return;
@@ -75,57 +76,36 @@ function CameraRig() {
     const baseY = terrainHeight(p.x, p.z);
     const pitch = inputState.cameraPitch;
     const yaw = inputState.cameraYaw;
-    const wanted = inputState.cameraDistance;
+    const dist = inputState.cameraDistance;
 
-    // Pull the camera in front of trunks, rocks, the cabin and built structures.
-    const dirX = Math.sin(yaw);
-    const dirZ = Math.cos(yaw);
-    let allowed = Math.cos(pitch) * wanted;
-    const consider = (ox: number, oz: number, radius: number) => {
-      const proj = ox * dirX + oz * dirZ;
-      if (proj < 0.5 || proj > allowed + radius) return;
-      const perp = Math.abs(ox * dirZ - oz * dirX);
-      if (perp < radius + 0.35) allowed = Math.min(allowed, proj - radius - 0.25);
-    };
-    for (const node of engine.nodes) {
-      if (node.kind === 'tree') consider(node.x - p.x, node.z - p.z, 0.55 * node.scale);
-      else if (node.kind === 'rock') consider(node.x - p.x, node.z - p.z, 0.8 * node.scale);
-    }
-    consider(34 - p.x, -38 - p.z, 3.1);
-    for (const st of engine.state.structures) {
-      const def = STRUCTURES[st.defId];
-      if (def) consider(st.x - p.x, st.z - p.z, def.radius * 0.8);
-    }
-    allowed = Math.max(2.1, Math.min(allowed, wanted));
-    allowedDistance.current += (allowed - allowedDistance.current) * Math.min(1, delta * 12);
-    const horizontal = allowedDistance.current;
-
-    target.current.set(p.x, baseY + 1.5, p.z);
+    target.current.set(p.x, baseY + 1.15, p.z);
     desired.current.set(
-      p.x + dirX * horizontal,
-      baseY + 1.55 + Math.sin(pitch) * horizontal + 0.2,
-      p.z + dirZ * horizontal,
+      p.x + Math.sin(yaw) * Math.cos(pitch) * dist,
+      baseY + 1.15 + Math.sin(pitch) * dist,
+      p.z + Math.cos(yaw) * Math.cos(pitch) * dist,
     );
-    const ground = terrainHeight(desired.current.x, desired.current.z) + 0.85;
+    const ground = terrainHeight(desired.current.x, desired.current.z) + 1.2;
     if (desired.current.y < ground) desired.current.y = ground;
+
     if (!initialized.current) {
       camera.position.copy(desired.current);
       look.current.copy(target.current);
       initialized.current = true;
     } else {
-      const k = 1 - Math.exp(-delta * 9.5);
+      const k = 1 - Math.exp(-delta * 14);
       camera.position.lerp(desired.current, k);
       look.current.lerp(target.current, k);
     }
-    const impactShake = engine.runtime.damageFlash;
-    if (impactShake > 0.01) {
+
+    const shake = engine.runtime.damageFlash;
+    if (shake > 0.01) {
       const t = state.clock.elapsedTime * 46;
-      camera.position.x += Math.sin(t * 1.7) * 0.11 * impactShake;
-      camera.position.y += Math.cos(t * 2.3) * 0.08 * impactShake;
+      camera.position.x += Math.sin(t * 1.7) * 0.1 * shake;
+      camera.position.y += Math.cos(t * 2.3) * 0.07 * shake;
     }
     camera.lookAt(look.current);
     if (camera instanceof THREE.PerspectiveCamera) {
-      const wantFov = 58;
+      const wantFov = 48;
       if (Math.abs(camera.fov - wantFov) > 0.01) {
         camera.fov = wantFov;
         camera.updateProjectionMatrix();
@@ -147,8 +127,10 @@ function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
       <FpsSampler />
       <Terrain shadows={shadows} lowQuality={quality === 'low'} />
       <Water lowQuality={quality === 'low'} />
+      <LakeLife />
       <Vegetation revision={revision} shadows={shadows} quality={quality} />
       <StarterCamp shadows={shadows} />
+      <Props />
       <RangerCamp shadows={shadows} />
       <Footbridge shadows={shadows} />
       <Lookout shadows={shadows} />
@@ -293,7 +275,7 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
           flat
           shadows={quality !== 'low'}
           gl={{ antialias: quality !== 'low' }}
-          camera={{ fov: 58, near: 0.12, far: 420, position: [0, 8, 14] }}
+          camera={{ fov: 48, near: 0.12, far: 420, position: [0, 18, 12] }}
           onCreated={({ gl, scene }) => {
             setGlReady(true);
             useSession.getState().setRendererFailed(false);

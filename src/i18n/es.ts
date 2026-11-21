@@ -103,6 +103,12 @@ export const es: Dictionary = {
   'toast.save_recovered': 'Partida restaurada desde la copia de seguridad',
   'toast.load_failed': 'No se pudo leer la partida. Empezando de cero.',
   'toast.tutorial_skipped': 'Avisos desactivados. Puedes reactivarlos en Ajustes.',
+  'toast.auto_on': 'AUTO activado · recolectando el recurso más cercano',
+  'toast.auto_off': 'AUTO desactivado',
+  'toast.auto_stopped': 'AUTO detenido — peligro o necesidades bajas',
+  'toast.auto_nothing': 'AUTO no encuentra nada cerca para recolectar',
+  'hud.auto': 'AUTO',
+
   'toast.level_up': 'Nivel {level} alcanzado',
   'toast.skill_up': '{skill} mejoró a {level}',
   'toast.unsafe_quit': 'De vuelta al menú — progreso guardado',

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppState, BackHandler, Image, StyleSheet, View } from 'react-native';
 import { GameScene } from '../../game/rendering/Scene';
 import { Hud } from '../hud/Hud';
+import { TouchControls } from '../../game/runtime/TouchControls';
 import { InventoryPanel } from '../panels/InventoryPanel';
 import { CraftingPanel } from '../panels/CraftingPanel';
 import { MapPanel } from '../panels/MapPanel';
@@ -66,6 +67,7 @@ export function GameScreen() {
     <View style={styles.root}>
       <GameScene quality={quality} />
       <Image source={vignette} style={styles.vignette} resizeMode="stretch" pointerEvents="none" />
+      <TouchControls />
       <Hud />
       <InventoryPanel />
       <CraftingPanel />

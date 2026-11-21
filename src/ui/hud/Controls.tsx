@@ -16,6 +16,7 @@ import { useSettings, useT } from '../../state/settingsStore';
 import { isSimulationPaused, useSession, type Panel } from '../../state/sessionStore';
 import { inputState, rotateCamera, setMove } from '../../game/runtime/input';
 import { getEngine } from '../../game/runtime/session';
+import { ItemIcon } from '../components/ItemIcon';
 import type { GameSnapshot } from '../../game/engine/GameEngine';
 
 export function CameraDragLayer() {
@@ -333,6 +334,72 @@ export function ActionCluster({
   );
 }
 
+export function AutoButton({ leftHanded }: { leftHanded: boolean }) {
+  const { t } = useT();
+  const auto = useSession((s) => s.snapshot?.auto ?? false);
+  const toggle = () => {
+    getEngine()?.toggleAuto();
+    useSession.getState().sync();
+  };
+  return (
+    <Pressable
+      onPress={toggle}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: auto }}
+      accessibilityLabel={t('hud.auto')}
+      style={[
+        styles.autoButton,
+        leftHanded ? { right: 18, left: undefined } : { left: 18 },
+        auto ? { backgroundColor: C.accent, borderColor: C.accentBright } : null,
+      ]}
+    >
+      <Icon name="compass" size={15} color={auto ? C.ink : C.textSecondary} />
+      <AppText variant="micro" color={auto ? C.ink : C.textMuted} style={{ fontSize: 8 }}>
+        {t('hud.auto')}
+      </AppText>
+    </Pressable>
+  );
+}
+
+export function QuickBar() {
+  const snapshot = useSession((s) => s.snapshot);
+  const consume = useSession((s) => s.consumeItem);
+  const inventory = snapshot?.inventory;
+  const count = (id: string) =>
+    inventory?.slots.reduce((n, slot) => (slot?.id === id ? n + slot.qty : n), 0) ?? 0;
+  if (!inventory) return null;
+  const items = [
+    count('roasted_berries') > 0 ? 'roasted_berries' : 'wild_berries',
+    count('clean_water') > 0 ? 'clean_water' : 'dirty_water',
+    'basic_medkit',
+    'torch',
+  ];
+  return (
+    <View style={styles.quickWrap} pointerEvents="box-none">
+      <View style={styles.quickBar}>
+        {items.map((id, index) => {
+          const qty = count(id);
+          return (
+            <Pressable
+              key={`${id}-${index}`}
+              onPress={() => {
+                if (qty > 0) consume(id);
+              }}
+              accessibilityLabel={id}
+              style={[styles.quickSlot, qty <= 0 ? { opacity: 0.38 } : null]}
+            >
+              <ItemIcon id={id} size={26} />
+              <AppText variant="micro" color={C.text} style={styles.quickCount}>
+                {qty}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 const DOCK_ITEMS: { id: Panel | 'build'; icon: string; labelKey: string }[] = [
   { id: 'inventory', icon: 'backpack', labelKey: 'dock.pack' },
   { id: 'craft', icon: 'craft', labelKey: 'dock.craft' },
@@ -387,7 +454,7 @@ export function Dock() {
   );
 }
 
-export function BuildControls() {
+export function BuildControls({ leftHanded }: { leftHanded: boolean }) {
   const { t } = useT();
   const snapshot = useSession((s) => s.snapshot);
   const closePanel = useSession((s) => s.closePanel);
@@ -416,7 +483,13 @@ export function BuildControls() {
   const reasonKey = ghost ? `build.invalid.${ghost.reason}` : 'build.needs_plot';
 
   return (
-    <View style={styles.buildWrap} pointerEvents="box-none">
+    <View
+      style={[
+        styles.buildWrap,
+        leftHanded ? { alignItems: 'flex-start', paddingLeft: 16 } : { alignItems: 'flex-end', paddingRight: 16 },
+      ]}
+      pointerEvents="box-none"
+    >
       <View style={styles.buildPanel}>
         <View style={styles.buildHeader}>
           <View style={{ flex: 1 }}>
@@ -692,10 +765,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  buildWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+  buildWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   buildPanel: {
-    width: '78%',
-    maxWidth: 760,
+    width: '56%',
+    maxWidth: 560,
     marginBottom: 12,
     padding: 12,
     borderRadius: R.lg,
@@ -757,6 +830,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carousel: { flexDirection: 'row', gap: 6 },
+  autoButton: {
+    position: 'absolute',
+    bottom: 176,
+    width: 62,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: 'rgba(6,14,12,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
+  },
+  quickWrap: { position: 'absolute', left: 0, right: 0, bottom: 78, alignItems: 'center' },
+  quickBar: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
+    borderRadius: R.md,
+    backgroundColor: 'rgba(6,14,12,0.7)',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  quickSlot: {
+    width: 42,
+    height: 42,
+    borderRadius: R.sm,
+    backgroundColor: 'rgba(233,240,226,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(233,240,226,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickCount: {
+    position: 'absolute',
+    right: 2,
+    bottom: 0,
+    fontSize: 8,
+    color: C.accent,
+    fontFamily: FONT.semibold,
+  },
   manageToggle: {
     flexDirection: 'row',
     alignItems: 'center',

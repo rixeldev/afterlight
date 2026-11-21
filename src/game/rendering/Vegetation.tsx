@@ -127,7 +127,7 @@ export function Vegetation({
   const rockParts = useModelParts('stylized_rock');
   const decor = useMemo(() => generateDecor(), []);
 
-  const { trees, treeTints, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs, flowers, flowerTints, ao } = useMemo(() => {
+  const { trees, treeTints, stumps, rocks, rockStumps, bushes, fibers, grassTufts, ferns, pebbles, logs, flowers, flowerTints, ao, moss } = useMemo(() => {
     void revision;
     const engine = getEngine();
     const nodes = engine?.nodes ?? [];
@@ -139,6 +139,7 @@ export function Vegetation({
     const bushItems: Xform[] = [];
     const fiberItems: Xform[] = [];
     const aoItems: { x: number; z: number; y: number; r: number }[] = [];
+    const mossItems: Xform[] = [];
 
     for (const node of nodes) {
       const state = engine?.state.nodes[node.id];
@@ -176,6 +177,15 @@ export function Vegetation({
         } else {
           aoItems.push({ x: node.x, z: node.z, y, r: 1.1 * node.scale });
           rockItems.push({ x: node.x, y: y - 0.1, z: node.z, rot: node.rot, sx: node.scale, sy: node.scale * 0.85, sz: node.scale });
+          mossItems.push({
+            x: node.x + Math.cos(node.rot) * 0.12 * node.scale,
+            y: y + 0.48 * node.scale,
+            z: node.z + Math.sin(node.rot) * 0.12 * node.scale,
+            rot: node.rot,
+            sx: node.scale * 0.5,
+            sy: node.scale * 0.18,
+            sz: node.scale * 0.45,
+          });
         }
       } else if (node.kind === 'bush') {
         if (!depleted) {
@@ -184,18 +194,15 @@ export function Vegetation({
         }
       } else if (node.kind === 'fiber') {
         if (!depleted) {
-          for (let i = 0; i < 5; i += 1) {
-            const a = node.rot + (i / 5) * Math.PI * 2;
-            fiberItems.push({
-              x: node.x + Math.cos(a) * 0.22,
-              y,
-              z: node.z + Math.sin(a) * 0.22,
-              rot: a,
-              sx: node.scale,
-              sy: node.scale * (0.85 + (i % 3) * 0.12),
-              sz: node.scale,
-            });
-          }
+          fiberItems.push({
+            x: node.x,
+            y,
+            z: node.z,
+            rot: node.rot,
+            sx: node.scale * 1.1,
+            sy: node.scale * 1.25,
+            sz: node.scale * 1.1,
+          });
         }
       }
     }
@@ -220,9 +227,9 @@ export function Vegetation({
         y: terrainHeight(d.x, d.z),
         z: d.z,
         rot: d.rot,
-        sx: d.scale * 1.35,
-        sy: d.scale * 1.55,
-        sz: d.scale * 1.35,
+        sx: d.scale * 1.65,
+        sy: d.scale * 1.9,
+        sz: d.scale * 1.65,
       }));
     const pebbleItems = decor.pebbles.map<Xform>((d) => ({
       x: d.x,
@@ -258,6 +265,7 @@ export function Vegetation({
     return {
       trees: treeItems,
       treeTints: treeColors,
+      moss: mossItems,
       stumps: stumpItems,
       rocks: rockItems,
       rockStumps: rockStumpItems,
@@ -274,20 +282,40 @@ export function Vegetation({
   }, [revision, decor, quality]);
 
   const bladeGeometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.05, 0.62, 3, 1, true);
-    geo.translate(0, 0.5, 0);
-    geo.rotateX(0.12);
+    // A single tuft of six tapered blades in one geometry: one instance draws a
+    // convincing clump instead of a lone cone.
+    const positions: number[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * Math.PI * 2 + (i % 2) * 0.33;
+      const height = 0.42 + (i % 3) * 0.13;
+      const lean = 0.1 + (i % 4) * 0.035;
+      const width = 0.034;
+      const bx = Math.cos(a) * 0.07;
+      const bz = Math.sin(a) * 0.07;
+      const tx = bx + Math.cos(a) * lean;
+      const tz = bz + Math.sin(a) * lean;
+      const px = -Math.sin(a) * width;
+      const pz = Math.cos(a) * width;
+      positions.push(bx - px, 0, bz - pz, bx + px, 0, bz + pz, tx, height, tz);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.computeVertexNormals();
     return geo;
   }, []);
 
   const bushGeometry = useMemo(() => new THREE.IcosahedronGeometry(0.62, 0), []);
   const berryGeometry = useMemo(() => new THREE.SphereGeometry(0.08, 5, 4), []);
   const grassMaterial = useMemo(
-    () => new THREE.MeshLambertMaterial({ color: '#5C7C49', side: THREE.DoubleSide }),
+    () => new THREE.MeshLambertMaterial({ color: '#5F854C', side: THREE.DoubleSide }),
     [],
   );
   const fernMaterial = useMemo(
-    () => new THREE.MeshLambertMaterial({ color: '#41633B', side: THREE.DoubleSide }),
+    () => new THREE.MeshLambertMaterial({ color: '#436A3E', side: THREE.DoubleSide }),
+    [],
+  );
+  const fiberMaterial = useMemo(
+    () => new THREE.MeshLambertMaterial({ color: '#A6AE67', side: THREE.DoubleSide }),
     [],
   );
   const stumpParts = useMemo<ModelPart[]>(
@@ -322,8 +350,8 @@ export function Vegetation({
     [berryGeometry],
   );
   const fiberParts = useMemo<ModelPart[]>(
-    () => [{ geometry: bladeGeometry, material: new THREE.MeshLambertMaterial({ color: '#94A868', side: THREE.DoubleSide }) }],
-    [bladeGeometry],
+    () => [{ geometry: bladeGeometry, material: fiberMaterial }],
+    [bladeGeometry, fiberMaterial],
   );
   const flowerParts = useMemo<ModelPart[]>(
     () => [
@@ -332,6 +360,10 @@ export function Vegetation({
         material: new THREE.MeshBasicMaterial({ color: '#FFFFFF' }),
       },
     ],
+    [],
+  );
+  const mossParts = useMemo<ModelPart[]>(
+    () => [{ geometry: new THREE.IcosahedronGeometry(0.7, 0), material: new THREE.MeshLambertMaterial({ color: '#5D7C4B' }) }],
     [],
   );
   const pebbleParts = useMemo<ModelPart[]>(
@@ -385,6 +417,10 @@ export function Vegetation({
       )}
 
       {stumps.length > 0 ? <InstancedParts parts={stumpParts} items={stumps} castShadow={false} /> : null}
+
+      {moss.length > 0 ? <InstancedParts parts={mossParts} items={moss} castShadow={false} /> : null}
+
+      <TreeDetails treeParts={treeParts} shadows={shadows} />
 
       {rockStumps.length > 0 ? (
         <InstancedParts parts={rockStumpParts} items={rockStumps} castShadow={false} />
@@ -464,6 +500,118 @@ export function Vegetation({
       <GroundShadows items={ao} />
     </group>
   );
+}
+
+/** Adds two extra canopy lobes and two branches to every living tree. */
+function TreeDetails({ treeParts, shadows }: { treeParts: ModelPart[]; shadows: boolean }) {
+  const engine = getEngine();
+  const canopy = useMemo(
+    () => treeParts.find((p) => /canopy/i.test(p.material.name ?? '')) ?? treeParts[1],
+    [treeParts],
+  );
+  const bark = useMemo(
+    () => treeParts.find((p) => /bark/i.test(p.material.name ?? '')) ?? treeParts[0],
+    [treeParts],
+  );
+
+  const detail = useMemo(() => {
+    if (!canopy || !engine) return null;
+    const geo = canopy.geometry.clone();
+    geo.computeBoundingBox();
+    const center = geo.boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 3, 0);
+    geo.translate(-center.x, -center.y, -center.z);
+    const lobes: Xform[] = [];
+    const tints: string[] = [];
+    const branches: { from: [number, number, number]; to: [number, number, number]; radius: number }[] = [];
+    for (const node of engine.nodes) {
+      if (node.kind !== 'tree') continue;
+      const st = engine.state.nodes[node.id];
+      if (st && st.charges <= 0) continue;
+      const y = terrainHeight(node.x, node.z);
+      const s = node.scale;
+      const c = center.y;
+      lobes.push({
+        x: node.x + 0.62 * s,
+        y: y + c * s + 0.12 * s,
+        z: node.z + 0.28 * s,
+        rot: node.rot + 0.6,
+        sx: 0.6 * s,
+        sy: 0.56 * s,
+        sz: 0.6 * s,
+      });
+      tints.push('#A6D39A');
+      lobes.push({
+        x: node.x - 0.55 * s,
+        y: y + c * s - 0.06 * s,
+        z: node.z - 0.38 * s,
+        rot: node.rot + 1.9,
+        sx: 0.55 * s,
+        sy: 0.5 * s,
+        sz: 0.55 * s,
+      });
+      tints.push('#7FB47A');
+      branches.push({
+        from: [node.x, y + 1.75 * s, node.z],
+        to: [node.x + 0.7 * s, y + (c - 0.2) * s, node.z + 0.3 * s],
+        radius: 0.05 * s,
+      });
+      branches.push({
+        from: [node.x, y + 1.95 * s, node.z],
+        to: [node.x - 0.6 * s, y + (c - 0.3) * s, node.z - 0.4 * s],
+        radius: 0.045 * s,
+      });
+    }
+    return { geo, lobes, tints, branches };
+  }, [canopy, engine]);
+
+  if (!detail || detail.lobes.length === 0) return null;
+  return (
+    <group>
+      <InstancedParts
+        parts={[{ geometry: detail.geo, material: canopy!.material }]}
+        items={detail.lobes}
+        tints={detail.tints}
+        tintPart={0}
+        castShadow={shadows}
+      />
+      {bark ? <BranchInstances data={detail.branches} material={bark.material} /> : null}
+    </group>
+  );
+}
+
+function BranchInstances({
+  data,
+  material,
+}: {
+  data: { from: [number, number, number]; to: [number, number, number]; radius: number }[];
+  material: THREE.Material;
+}) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const geometry = useMemo(() => new THREE.CylinderGeometry(1, 1, 1, 5), []);
+  const materialRef = useMemo(() => material.clone(), [material]);
+  useLayoutEffect(() => {
+    if (!mesh.current || data.length === 0) return;
+    const dummy = new THREE.Object3D();
+    const up = new THREE.Vector3(0, 1, 0);
+    const from = new THREE.Vector3();
+    const to = new THREE.Vector3();
+    const dir = new THREE.Vector3();
+    data.forEach((branch, i) => {
+      from.set(...branch.from);
+      to.set(...branch.to);
+      dir.copy(to).sub(from);
+      const length = dir.length();
+      dummy.position.copy(from).add(dir.clone().multiplyScalar(0.5));
+      dummy.quaternion.setFromUnitVectors(up, dir.normalize());
+      dummy.scale.set(branch.radius, length, branch.radius);
+      dummy.updateMatrix();
+      mesh.current!.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.current.instanceMatrix.needsUpdate = true;
+    mesh.current.computeBoundingSphere();
+  }, [data]);
+  if (data.length === 0) return null;
+  return <instancedMesh ref={mesh} args={[geometry, materialRef, data.length]} count={data.length} castShadow={false} frustumCulled={false} />;
 }
 
 function makeShadowTexture(): THREE.DataTexture {

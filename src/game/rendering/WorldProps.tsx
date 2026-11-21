@@ -4,10 +4,146 @@ import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { terrainHeight } from '../world/terrain';
 import { STRUCTURES } from '../../data/recipes';
-import { getNormalMap, getTexture, loadModel } from './assets';
+import { getNormalMap, getTexture, loadModel, texturedMaterial } from './assets';
 import { FOOTBRIDGE, LOOKOUT, RANGER_CABIN, SILENT_GATE } from '../world/layout';
 
 const FIRE = '#FFB35C';
+
+const PROP_WOOD = texturedMaterial('weathered_wood_albedo', {
+  color: '#C9A978',
+  repeat: 2,
+  brightness: 1.45,
+  normalStrength: 1.8,
+});
+const PROP_BARK = texturedMaterial('bark_albedo', {
+  color: '#C9A37B',
+  repeat: 1.6,
+  brightness: 1.45,
+  normalStrength: 2,
+});
+const PROP_STONE = texturedMaterial('stone_albedo', {
+  color: '#D6D9CC',
+  repeat: 2,
+  brightness: 1.15,
+  normalStrength: 1.8,
+});
+const PROP_METAL = new THREE.MeshStandardMaterial({ color: '#6A6F69', metalness: 0.55, roughness: 0.5 });
+
+function SmokePlume({
+  x,
+  y,
+  z,
+  count = 5,
+  scale = 1,
+  color = '#B9C2B4',
+}: {
+  x: number;
+  y: number;
+  z: number;
+  count?: number;
+  scale?: number;
+  color?: string;
+}) {
+  const meshes = useRef<(THREE.Mesh | null)[]>([]);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    for (let i = 0; i < count; i += 1) {
+      const mesh = meshes.current[i];
+      if (!mesh) continue;
+      const p = ((t * 0.11 + i / count) % 1 + 1) % 1;
+      mesh.position.set(
+        x + Math.sin(t * 0.35 + i * 1.7) * 0.34 * p * scale,
+        y + p * 3.1 * scale,
+        z + Math.cos(t * 0.28 + i * 1.3) * 0.28 * p * scale,
+      );
+      const s = (0.22 + p * 0.95) * scale;
+      mesh.scale.setScalar(s);
+      const mat = mesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.2 * (1 - p);
+    }
+  });
+  return (
+    <group>
+      {Array.from({ length: count }).map((_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            meshes.current[i] = el;
+          }}
+        >
+          <sphereGeometry args={[1, 7, 5]} />
+          <meshBasicMaterial color={color} transparent opacity={0.18} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Crate({ x, z, rot = 0, scale = 1 }: { x: number; z: number; rot?: number; scale?: number }) {
+  const y = terrainHeight(x, z);
+  return (
+    <group position={[x, y, z]} rotation={[0, rot, 0]} scale={scale}>
+      <mesh position={[0, 0.42, 0]} material={PROP_WOOD} castShadow>
+        <boxGeometry args={[1.15, 0.84, 0.86]} />
+      </mesh>
+      <mesh position={[0, 0.42, 0]} material={PROP_METAL}>
+        <boxGeometry args={[1.17, 0.08, 0.88]} />
+      </mesh>
+      <mesh position={[0, 0.84, 0]} material={PROP_WOOD}>
+        <boxGeometry args={[1.04, 0.08, 0.76]} />
+      </mesh>
+    </group>
+  );
+}
+
+function Barrel({ x, z, rot = 0 }: { x: number; z: number; rot?: number }) {
+  const y = terrainHeight(x, z);
+  return (
+    <group position={[x, y, z]} rotation={[0, rot, 0]}>
+      <mesh position={[0, 0.48, 0]} material={PROP_WOOD} castShadow>
+        <cylinderGeometry args={[0.42, 0.46, 0.94, 9]} />
+      </mesh>
+      {[0.18, 0.78].map((h) => (
+        <mesh key={h} position={[0, h, 0]} material={PROP_METAL}>
+          <cylinderGeometry args={[0.445, 0.445, 0.07, 9]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** Salvaged junk around the ranger camp and bridge makes the collapse feel lived-in. */
+function AbandonedProps() {
+  return (
+    <group>
+      <Crate x={30.4} z={-31.8} rot={0.35} />
+      <Crate x={31.6} z={-30.9} rot={-0.2} scale={0.78} />
+      <Crate x={27.8} z={-33.2} rot={1.2} scale={0.9} />
+      <Barrel x={29.2} z={-35.3} rot={0.4} />
+      <Barrel x={32.7} z={-29.8} rot={-0.7} />
+      <mesh position={[30.9, terrainHeight(30.9, -34.6) + 0.08, -34.6]} rotation={[0, 0.6, 0.02]} material={PROP_BARK}>
+        <boxGeometry args={[2.3, 0.08, 0.34]} />
+      </mesh>
+      <Crate x={-36.2} z={22.2} rot={0.8} scale={0.85} />
+      <Barrel x={-35} z={20.8} rot={1.3} />
+      <mesh position={[-33.2, terrainHeight(-33.2, 28.6) + 0.1, 28.6]} rotation={[0, -0.5, 0]} material={PROP_STONE}>
+        <dodecahedronGeometry args={[0.5, 0]} />
+      </mesh>
+      <mesh position={[-37.4, terrainHeight(-37.4, 27.2) + 0.06, 27.2]} rotation={[0.2, 0.9, 0.1]} material={PROP_BARK}>
+        <boxGeometry args={[1.8, 0.08, 0.3]} />
+      </mesh>
+      {/* stone chimney for the cabin smoke */}
+      <mesh position={[35.3, terrainHeight(35.3, -38.4) + 3.4, -38.4]} material={PROP_STONE} castShadow>
+        <boxGeometry args={[0.55, 1.5, 0.55]} />
+      </mesh>
+      <group position={[35.3, terrainHeight(35.3, -38.4) + 4.15, -38.4]}>
+        <SmokePlume x={0} y={0} z={0} count={6} scale={0.5} />
+      </group>
+    </group>
+  );
+}
+
+
 
 const WOOD_TEX = { map: getTexture('weathered_wood_albedo', 2, 1.6), normalMap: getNormalMap('weathered_wood_albedo', 2, 1.8) };
 const BARK_TEX = { map: getTexture('bark_albedo', 1.6, 1.6), normalMap: getNormalMap('bark_albedo', 1.6, 2.2) };
@@ -246,6 +382,10 @@ export function SilentGate({ shadows }: { shadows: boolean }) {
   );
 }
 
+export function Props() {
+  return <AbandonedProps />;
+}
+
 export function StarterCamp({ shadows }: { shadows: boolean }) {
   const bedY = terrainHeight(1.8, -2.4);
   return (
@@ -370,6 +510,9 @@ function StructureMesh({ defId, structureId }: { defId: string; structureId: str
             <meshBasicMaterial color="#FFE7B0" />
           </mesh>
           <pointLight ref={fireLight} position={[0, 0.9, 0]} color={FIRE} intensity={2.2} distance={11} decay={2} />
+          <group position={[0, 0.75, 0]}>
+            <SmokePlume x={0} y={0} z={0} count={5} scale={0.28} color="#CFD5C8" />
+          </group>
         </group>
       );
     case 'workbench':

@@ -104,6 +104,12 @@ export const en = {
   'toast.save_recovered': 'Save restored from backup',
   'toast.load_failed': 'Save could not be read. Starting fresh.',
   'toast.tutorial_skipped': 'Hints disabled. Replay them in Settings.',
+  'toast.auto_on': 'AUTO on · gathering the nearest resource',
+  'toast.auto_off': 'AUTO off',
+  'toast.auto_stopped': 'AUTO stopped — danger or low needs',
+  'toast.auto_nothing': 'AUTO found nothing nearby to gather',
+  'hud.auto': 'AUTO',
+
   'toast.level_up': 'Level {level} reached',
   'toast.skill_up': '{skill} improved to {level}',
   'toast.unsafe_quit': 'Returned to menu — progress saved',

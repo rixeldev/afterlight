@@ -86,7 +86,7 @@ export function SettingsPanel() {
         {row(
           t('settings.sensitivity'),
           'compass',
-          <Slider label={t('settings.sensitivity')} min={0.4} max={2} value={settings.cameraSensitivity} onChange={(v) => update({ cameraSensitivity: v })} format={(v) => `${v.toFixed(1)}×`} />,
+          <Slider label={t('settings.sensitivity')} min={0.4} max={2} step={0.05} value={settings.cameraSensitivity} onChange={(v) => update({ cameraSensitivity: v })} format={(v) => `${v.toFixed(2)}×`} />,
         )}
         {row(t('settings.haptics'), 'sparkle', <Toggle label={t('settings.haptics')} value={settings.haptics} onChange={(v) => update({ haptics: v })} />)}
         {row(t('settings.left_handed'), 'hand', <Toggle label={t('settings.left_handed')} value={settings.leftHanded} onChange={(v) => update({ leftHanded: v })} />)}

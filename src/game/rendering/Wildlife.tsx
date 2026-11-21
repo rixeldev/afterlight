@@ -11,6 +11,8 @@ export function Wildlife() {
   const birdGroups = useRef<(THREE.Group | null)[]>([]);
   const wings = useRef<(THREE.Mesh | null)[]>([]);
   const points = useRef<THREE.Points>(null);
+  const butterflies = useRef<(THREE.Group | null)[]>([]);
+  const butterflyWings = useRef<(THREE.Mesh | null)[]>([]);
   const birdBases = useMemo(
     () =>
       Array.from({ length: BIRDS }, (_, i) => ({
@@ -66,6 +68,26 @@ export function Wildlife() {
     wings.current.forEach((wing, i) => {
       if (!wing) return;
       wing.rotation.z = Math.sin(state.clock.elapsedTime * 7.5 + i * 0.9) * 0.55;
+    });
+
+    butterflies.current.forEach((group, i) => {
+      if (!group) return;
+      group.visible = day;
+      if (!day) return;
+      const t = state.clock.elapsedTime;
+      const a = t * 0.22 + i * 1.31;
+      const r = 5 + i * 1.6;
+      group.position.set(
+        Math.cos(a) * r,
+        0.8 + Math.sin(t * 0.9 + i) * 0.35 + (i % 2) * 0.25,
+        Math.sin(a * 1.1) * r,
+      );
+      group.rotation.y = -a;
+      const flap = Math.sin(t * 11 + i * 2) * 0.75;
+      const left = butterflyWings.current[i * 2];
+      const right = butterflyWings.current[i * 2 + 1];
+      if (left) left.rotation.z = flap;
+      if (right) right.rotation.z = -flap;
     });
 
     if (points.current) {
@@ -125,6 +147,46 @@ export function Wildlife() {
           >
             <boxGeometry args={[0.34, 0.02, 0.16]} />
             <meshBasicMaterial color="#26332E" />
+          </mesh>
+        </group>
+      ))}
+
+      {Array.from({ length: 5 }).map((_, i) => (
+        <group
+          key={`bf-${i}`}
+          ref={(el) => {
+            butterflies.current[i] = el;
+          }}
+          visible={false}
+          scale={0.8}
+        >
+          <mesh
+            ref={(el) => {
+              butterflyWings.current[i * 2] = el;
+            }}
+            position={[-0.08, 0, 0]}
+          >
+            <planeGeometry args={[0.16, 0.12]} />
+            <meshBasicMaterial
+              color={['#E8CB92', '#E7B9C0', '#CFE0A8', '#E8CB92', '#D9C7F0'][i]}
+              side={THREE.DoubleSide}
+              transparent
+              opacity={0.95}
+            />
+          </mesh>
+          <mesh
+            ref={(el) => {
+              butterflyWings.current[i * 2 + 1] = el;
+            }}
+            position={[0.08, 0, 0]}
+          >
+            <planeGeometry args={[0.16, 0.12]} />
+            <meshBasicMaterial
+              color={['#E8CB92', '#E7B9C0', '#CFE0A8', '#E8CB92', '#D9C7F0'][i]}
+              side={THREE.DoubleSide}
+              transparent
+              opacity={0.95}
+            />
           </mesh>
         </group>
       ))}

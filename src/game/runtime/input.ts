@@ -17,13 +17,13 @@ export const inputState: InputState = {
   moveX: 0,
   moveY: 0,
   sprint: false,
-  cameraYaw: Math.PI * 0.15,
-  cameraPitch: 0.16,
-  cameraDistance: 6.6,
+  cameraYaw: 0,
+  cameraPitch: 1.0,
+  cameraDistance: 15.5,
 };
 
-const PITCH_MIN = 0.04;
-const PITCH_MAX = 0.85;
+const PITCH_MIN = 0.35;
+const PITCH_MAX = 1.18;
 
 export function resetInput(): void {
   inputState.moveX = 0;
@@ -43,15 +43,15 @@ export function setMove(x: number, y: number): void {
 }
 
 export function rotateCamera(dx: number, dy: number, sensitivity: number): void {
-  inputState.cameraYaw -= dx * 0.0055 * sensitivity;
+  inputState.cameraYaw -= dx * 0.0038 * sensitivity;
   inputState.cameraPitch = Math.max(
     PITCH_MIN,
-    Math.min(PITCH_MAX, inputState.cameraPitch + dy * 0.0038 * sensitivity),
+    Math.min(PITCH_MAX, inputState.cameraPitch + dy * 0.0028 * sensitivity),
   );
 }
 
 export function adjustCameraDistance(delta: number): void {
-  inputState.cameraDistance = Math.max(4.6, Math.min(10.5, inputState.cameraDistance + delta));
+  inputState.cameraDistance = Math.max(10, Math.min(22, inputState.cameraDistance + delta));
 }
 
 export function cameraYawDirection(): { x: number; z: number } {

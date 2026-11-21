@@ -40,6 +40,7 @@ import { advanceQuest, createQuestSave, isStepComplete } from '../quests/questSy
 import {
   CAMP_RADIUS,
   CRAFT_QUEUE_LIMIT,
+  GATHER_RANGE,
   INTERACT_RANGE,
   MAX_STORAGE_SLOTS,
   MINUTES_PER_DAY,
@@ -131,6 +132,7 @@ export interface GameSnapshot {
   action: { labelKey: string; progress: number; active: boolean } | null;
   threat: ThreatSummary | null;
   build: BuildGhost | null;
+  auto: boolean;
   station: { campfire: boolean; workbench: boolean };
   damageFlash: number;
   attackFlash: number;
@@ -190,6 +192,7 @@ interface Runtime {
   interactCooldownUntil: number;
   nodeRevision: number;
   goalTimer: number;
+  auto: boolean;
 }
 
 const GATHER_DURATION: Record<HarvestNode['kind'], { base: number; tool: number; sfx: string; label: string }> = {
@@ -325,6 +328,7 @@ export class GameEngine {
       interactCooldownUntil: 0,
       nodeRevision: 0,
       goalTimer: 3,
+      auto: false,
     };
   }
 
@@ -562,8 +566,9 @@ export class GameEngine {
     this.state.minutes += gameMinutes;
     this.state.stats.minutesPlayed += dt;
 
-    this.updateMovement(dt, input);
-    this.updateNeeds(dt, gameMinutes, input);
+    const effectiveInput = this.autoInput(input);
+    this.updateMovement(dt, effectiveInput);
+    this.updateNeeds(dt, gameMinutes, effectiveInput);
     if (this.state.player.health <= 0) this.collapse();
     this.updateNodes();
     this.updateStructures(gameMinutes);
@@ -1075,6 +1080,7 @@ export class GameEngine {
         this.toast('warn', 'toast.inventory_full');
         this.sfx(SFX.error);
         this.cancelGather();
+        if (this.runtime.auto) this.setAuto(false);
         return;
       }
       probe = test.inventory;
@@ -1632,6 +1638,96 @@ export class GameEngine {
     this.requestSave();
   }
 
+  // ── Auto mode ───────────────────────────────────────────────────────────
+
+  setAuto(enabled: boolean) {
+    if (this.runtime.auto === enabled) return;
+    this.runtime.auto = enabled;
+    this.runtime.gather = null;
+    this.runtime.heldInteract = false;
+    this.toast('info', enabled ? 'toast.auto_on' : 'toast.auto_off');
+    if (enabled) this.sfx(SFX.uiTap);
+  }
+
+  toggleAuto(): boolean {
+    this.setAuto(!this.runtime.auto);
+    return this.runtime.auto;
+  }
+
+  getAuto(): boolean {
+    return this.runtime.auto;
+  }
+
+  private autoTarget(): HarvestNode | null {
+    const p = this.state.player;
+    let best: HarvestNode | null = null;
+    let bestDist = 32;
+    for (const node of this.nodes) {
+      if (node.kind !== 'tree' && node.kind !== 'rock' && node.kind !== 'bush' && node.kind !== 'fiber') continue;
+      const st = this.state.nodes[node.id];
+      if (!st || st.charges <= 0) continue;
+      const dist = DIST(p.x, p.z, node.x, node.z);
+      if (dist < bestDist) {
+        best = node;
+        bestDist = dist;
+      }
+    }
+    return best;
+  }
+
+  private autoInput(input: TickInput): TickInput {
+    if (!this.runtime.auto) return input;
+    if (this.runtime.threat) {
+      this.setAuto(false);
+      this.toast('warn', 'toast.auto_stopped');
+      return input;
+    }
+    if (this.state.player.hunger < 15 || this.state.player.thirst < 15) {
+      this.setAuto(false);
+      this.toast('warn', 'toast.auto_stopped');
+      return input;
+    }
+    const target = this.autoTarget();
+    if (!target) {
+      this.setAuto(false);
+      this.toast('info', 'toast.auto_nothing');
+      return input;
+    }
+    const p = this.state.player;
+    const dist = DIST(p.x, p.z, target.x, target.z);
+    if (dist <= GATHER_RANGE - 0.5) {
+      if (!this.runtime.gather) {
+        p.facing = Math.atan2(target.x - p.x, -(target.z - p.z));
+        this.runtime.gather = {
+          nodeId: target.id,
+          elapsed: 0,
+          duration: GATHER_DURATION[target.kind].base,
+          labelKey: GATHER_DURATION[target.kind].label,
+          repeat: true,
+        };
+        this.runtime.heldInteract = true;
+      }
+      return { ...input, moveX: 0, moveY: 0, sprint: false };
+    }
+    this.runtime.gather = null;
+    const dirX = target.x - p.x;
+    const dirZ = target.z - p.z;
+    const len = Math.hypot(dirX, dirZ) || 1;
+    const fx = dirX / len;
+    const fz = dirZ / len;
+    const yaw = input.cameraYaw;
+    const fwdX = -Math.sin(yaw);
+    const fwdZ = -Math.cos(yaw);
+    const rightX = Math.cos(yaw);
+    const rightZ = -Math.sin(yaw);
+    return {
+      ...input,
+      moveX: fx * rightX + fz * rightZ,
+      moveY: fx * fwdX + fz * fwdZ,
+      sprint: false,
+    };
+  }
+
   // ── Tutorial ────────────────────────────────────────────────────────────
 
   dismissTutorialHint() {
@@ -1708,6 +1804,7 @@ export class GameEngine {
           }
         : null,
       build: this.getBuildGhost(),
+      auto: this.runtime.auto,
       station: {
         campfire: this.stationInRange('campfire'),
         workbench: this.stationInRange('workbench'),

@@ -57,3 +57,30 @@ describe('homestead goals', () => {
     expect(engine.state.player.xp).toBe(xp);
   });
 });
+
+describe('auto-gather', () => {
+  it('walks to a resource node and gathers without input', () => {
+    const engine = new GameEngine(createNewSave(), generateHarvestNodes());
+    engine.setAuto(true);
+    expect(engine.getAuto()).toBe(true);
+    for (let i = 0; i < 900; i += 1) {
+      engine.tick(0.05, { moveX: 0, moveY: 0, sprint: false, cameraYaw: 0 });
+      if (engine.state.stats.itemsGathered > 0) break;
+    }
+    expect(engine.state.stats.distanceTravelled).toBeGreaterThan(3);
+    expect(engine.state.stats.itemsGathered).toBeGreaterThan(0);
+  });
+
+  it('turns off when danger is present', () => {
+    const engine = new GameEngine(createNewSave(), generateHarvestNodes());
+    engine.setAuto(true);
+    engine.state.flags.nightfall = true;
+    engine.state.minutes = 20 * 60;
+    engine.state.player.x = 40;
+    engine.state.player.z = 10;
+    for (let i = 0; i < 120; i += 1) {
+      engine.tick(0.05, { moveX: 0, moveY: 0, sprint: false, cameraYaw: 0 });
+    }
+    expect(engine.getAuto()).toBe(false);
+  });
+});

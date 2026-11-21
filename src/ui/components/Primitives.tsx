@@ -396,6 +396,7 @@ export function Slider({
   label,
   format,
   width = 220,
+  step,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -404,6 +405,8 @@ export function Slider({
   label: string;
   format?: (v: number) => string;
   width?: number;
+  /** Quantise the value for precise controls such as sensitivity. */
+  step?: number;
 }) {
   const [trackWidth, setTrackWidth] = useState(width);
   const widthRef = useRef(width);
@@ -415,8 +418,14 @@ export function Slider({
     const w = widthRef.current;
     if (w <= 0) return;
     const p = Math.max(0, Math.min(1, x / w));
-    onChangeRef.current(min + p * (max - min));
-  }, [min, max]);
+    const raw = min + p * (max - min);
+    if (step && step > 0) {
+      const snapped = Math.round((raw - min) / step) * step + min;
+      onChangeRef.current(Math.max(min, Math.min(max, snapped)));
+    } else {
+      onChangeRef.current(raw);
+    }
+  }, [min, max, step]);
 
   const responder = useMemo(
     () =>
