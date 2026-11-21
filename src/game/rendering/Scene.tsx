@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import { getEngine } from '../runtime/session';
 import { inputState } from '../runtime/input';
-import { isSimulationPaused, useSession } from '../../state/sessionStore';
+import { useSession } from '../../state/sessionStore';
 import { terrainHeight } from '../world/terrain';
 import { Environment } from './Environment';
 import { Terrain, Water } from './Terrain';
@@ -25,24 +25,16 @@ import { useSettings, useT } from '../../state/settingsStore';
 
 import { renderStats } from './stats';
 
-function Simulation() {
-  useFrame((_, delta) => {
+/** Rendering-only frame hook; the simulation lives in SimulationLoop. */
+function RenderTicker() {
+  useFrame(() => {
     const engine = getEngine();
     if (!engine) return;
-    const paused = isSimulationPaused();
-    engine.tick(paused ? 0 : Math.min(delta, 0.08), {
-      moveX: inputState.moveX,
-      moveY: inputState.moveY,
-      sprint: inputState.sprint,
-      cameraYaw: inputState.cameraYaw,
-    });
-    // Build mode: the same stick slides the blueprint (simulation is paused).
     if (useSession.getState().panel === 'build') {
       const dx = inputState.moveX;
       const dz = -inputState.moveY;
       if (Math.hypot(dx, dz) > 0.15) engine.moveBuildGhost(dx * 0.13, dz * 0.13);
     }
-    void _;
   });
   return null;
 }
@@ -114,7 +106,7 @@ function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
   return (
     <>
       <Environment quality={quality} />
-      <Simulation />
+      <RenderTicker />
       <CameraRig />
       <FpsSampler />
       <Terrain shadows={shadows} lowQuality={quality === 'low'} />
@@ -188,25 +180,83 @@ function RendererFallback({ onRetry, message }: { onRetry: () => void; message?:
 }
 
 export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
+  const { t } = useT();
   const [attempt, setAttempt] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [glReady, setGlReady] = useState(false);
+  const [glFailed, setGlFailed] = useState(false);
+  const update = useSettings((s) => s.update);
+
   useEffect(() => {
     // Let the screen paint before creating the GL surface (avoids a black frame
     // during navigation and gives the native context a stable view size).
     const id = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    if (!mounted || glReady || glFailed) return;
+    // Some drivers fail to create an Expo GL context without throwing. Never
+    // leave the player looking at an unexplained black screen.
+    const id = setTimeout(() => setGlFailed(true), 60000);
+    return () => clearTimeout(id);
+  }, [mounted, glReady, glFailed]);
+
+  const retry = () => {
+    setGlFailed(false);
+    setGlReady(false);
+    setAttempt((a) => a + 1);
+  };
+
   if (!mounted) return <View style={styles.container} />;
+  if (glFailed && !glReady) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.fallbackInner}>
+          <AppText variant="heading" align="center">
+            {t('common.webgl_error')}
+          </AppText>
+          <AppText variant="body" color={C.textMuted} align="center" style={{ maxWidth: 520, marginTop: 8 }}>
+            {t('common.webgl_error_body')}
+          </AppText>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+            <Button label={t('common.retry')} icon="rotate" onPress={retry} />
+            <Button
+              label={t('common.reduce_graphics')}
+              variant="secondary"
+              icon="settings"
+              onPress={() => {
+                update({ graphics: 'low' });
+                retry();
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
+  const loading = mounted && !glReady && !glFailed;
   return (
     <View style={styles.container}>
-      <RendererBoundary key={attempt} onRetry={() => setAttempt((a) => a + 1)}>
+      {loading ? (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <AppText variant="caption" color={C.textMuted}>
+            {t('app.loading')}
+          </AppText>
+        </View>
+      ) : null}
+      <RendererBoundary key={attempt} onRetry={retry}>
         <Canvas
           style={styles.canvas}
+          frameloop="always"
+          flat
           shadows={quality === 'high'}
           gl={{ antialias: quality !== 'low' }}
           camera={{ fov: 58, near: 0.12, far: 420, position: [0, 8, 14] }}
           onCreated={({ gl, scene }) => {
+            setGlReady(true);
             gl.setClearColor('#0B1714', 1);
+            gl.toneMappingExposure = 1.18;
             scene.background = new THREE.Color('#0B1714');
           }}
         >
@@ -220,6 +270,20 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   canvas: { flex: 1 },
+  loadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 120,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  fallbackInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
   fallback: {
     flex: 1,
     alignItems: 'center',

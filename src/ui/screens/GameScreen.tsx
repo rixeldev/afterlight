@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, BackHandler, StyleSheet, View } from 'react-native';
 import { GameScene } from '../../game/rendering/Scene';
 import { Hud } from '../hud/Hud';
 import { InventoryPanel } from '../panels/InventoryPanel';
@@ -14,6 +14,7 @@ import { ChapterCompleteOverlay, CollapseOverlay } from '../overlays/Overlays';
 import { useSession } from '../../state/sessionStore';
 import { useSettings } from '../../state/settingsStore';
 import { audio } from '../../services/audio/audio';
+import { startSimulationLoop, stopSimulationLoop } from '../../game/runtime/SimulationLoop';
 import { C } from '../theme';
 
 /**
@@ -26,9 +27,27 @@ export function GameScreen() {
 
   useEffect(() => {
     sync();
+    startSimulationLoop();
     const id = setInterval(() => useSession.getState().sync(), 130);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      stopSimulationLoop();
+    };
   }, [sync]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      const state = useSession.getState();
+      if (state.chapterComplete || state.collapse) return true;
+      if (state.panel !== 'none') {
+        state.closePanel();
+        return true;
+      }
+      state.openPanel('pause');
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {

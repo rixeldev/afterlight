@@ -1,5 +1,5 @@
 import { Component, useEffect, useState, type ReactNode } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { LogBox, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
@@ -20,6 +20,14 @@ import { C } from './src/ui/theme';
 import { Button, AppText } from './src/ui/components/Primitives';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+// Benign third-party warnings that would otherwise cover the game HUD in dev.
+LogBox.ignoreLogs([
+  'THREE.Clock',
+  'WEBGL_lose_context',
+  'ImageBackground is deprecated',
+  'Require cycle',
+]);
 
 class AppBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   override state = { error: null as Error | null };

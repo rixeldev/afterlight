@@ -1,3 +1,6 @@
+// Must be the first import: shims needed by CommonJS builds resolved on native
+// (notably Three.js's process.emitWarning call) before the app graph loads.
+import './src/polyfills';
 import { registerRootComponent } from 'expo';
 
 import App from './App';
