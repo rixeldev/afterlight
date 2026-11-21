@@ -18,12 +18,12 @@ export const inputState: InputState = {
   moveY: 0,
   sprint: false,
   cameraYaw: Math.PI * 0.15,
-  cameraPitch: 0.34,
-  cameraDistance: 7.2,
+  cameraPitch: 0.16,
+  cameraDistance: 6.6,
 };
 
-const PITCH_MIN = 0.05;
-const PITCH_MAX = 0.95;
+const PITCH_MIN = 0.04;
+const PITCH_MAX = 0.85;
 
 export function resetInput(): void {
   inputState.moveX = 0;

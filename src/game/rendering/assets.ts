@@ -54,18 +54,27 @@ export async function loadModelParts(id: ModelId): Promise<ModelPart[]> {
     geometry.applyMatrix4(mesh.matrixWorld);
     const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
     if (!material) return;
-    const clone = material.clone();
+    const clone = material.clone() as THREE.MeshStandardMaterial;
     clone.side = THREE.FrontSide;
+    if (clone.color) clone.color.multiplyScalar(1.4);
+    clone.needsUpdate = true;
     parts.push({ geometry, material: clone });
   });
   return parts;
 }
 
-export function getTexture(id: TextureId, repeat = 24): THREE.DataTexture {
-  const cacheKey = `${id}:${repeat}`;
+export function getTexture(id: TextureId, repeat = 24, brightness = 1): THREE.DataTexture {
+  const cacheKey = `${id}:${repeat}:${brightness}`;
   const existing = textureCache.get(cacheKey);
   if (existing) return existing;
   const bytes = toByteArray(TEXTURE_RGBA_BASE64[id]);
+  if (brightness !== 1) {
+    for (let i = 0; i < bytes.length; i += 4) {
+      bytes[i] = Math.min(255, bytes[i]! * brightness);
+      bytes[i + 1] = Math.min(255, bytes[i + 1]! * brightness);
+      bytes[i + 2] = Math.min(255, bytes[i + 2]! * brightness);
+    }
+  }
   const texture = new THREE.DataTexture(bytes, TEXTURE_SIZE, TEXTURE_SIZE, THREE.RGBAFormat);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;

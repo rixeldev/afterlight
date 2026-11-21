@@ -46,6 +46,11 @@ export const es: Dictionary = {
   'hud.tracked': 'En seguimiento',
   'hud.fps': '{fps} fps',
   'hud.new_quest': 'Nuevo objetivo',
+  'dock.pack': 'Mochila',
+  'dock.craft': 'Fabricar',
+  'dock.build': 'Construir',
+  'dock.map': 'Mapa',
+  'dock.journal': 'Diario',
 
   'interact.chop': 'Talar árbol',
   'interact.chop_tool': 'Talar árbol · hacha',

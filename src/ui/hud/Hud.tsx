@@ -9,7 +9,7 @@ import { currentTutorialHint, useSession } from '../../state/sessionStore';
 import { xpForNextLevel } from '../../game/progression/progression';
 import { REGION, POIS } from '../../data/world';
 import { questStep } from '../../data/quests';
-import { ActionCluster, BuildControls, CameraDragLayer, Dock, Joystick, SprintButton } from './Controls';
+import { ActionCluster, BuildControls, CameraDragLayer, Dock, Joystick } from './Controls';
 import { formatClock } from '../../i18n';
 import { renderStats } from '../../game/rendering/stats';
 
@@ -114,9 +114,8 @@ export function Hud() {
       ) : (
         <>
           <Joystick leftHanded={leftHanded} />
-          <SprintButton leftHanded={leftHanded} />
           <ActionCluster leftHanded={leftHanded} onRest={() => setRestOpen(true)} />
-          <Dock leftHanded={leftHanded} />
+          <Dock />
         </>
       )}
 
@@ -212,7 +211,9 @@ function QuestTracker({ onPress, hidden }: { onPress: () => void; hidden?: boole
       {next ? (
         <AppText variant="caption" color={C.textSecondary} numberOfLines={1}>
           {t(next.textKey)}
-          {next.amount && next.amount > 1 ? ` · ${Math.min(next.amount, nextValue)}/${next.amount}` : ''}
+          {next.amount && next.amount > 1
+            ? ` · ${Math.min(next.amount, Math.floor(nextValue))}/${next.amount}`
+            : ''}
         </AppText>
       ) : (
         <AppText variant="caption" color={C.success}>

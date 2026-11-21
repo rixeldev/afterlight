@@ -4,13 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { C, SP } from '../theme';
 import { AppText } from '../components/Primitives';
-import { useT } from '../../state/settingsStore';
+import { useSettings, useT } from '../../state/settingsStore';
 
 const TIPS = ['boot.tip.1', 'boot.tip.2', 'boot.tip.3', 'boot.tip.4'];
 
 export function BootScreen() {
   const { t } = useT();
   const { width } = useWindowDimensions();
+  const reducedMotion = useSettings((s) => s.settings.reducedMotion);
   const pulse = useRef(new Animated.Value(0)).current;
   const [tipIndex, setTipIndex] = useState(0);
   const [progress, setProgress] = useState(0.12);
@@ -22,7 +23,7 @@ export function BootScreen() {
         Animated.timing(pulse, { toValue: 0, duration: 2200, useNativeDriver: true }),
       ]),
     );
-    loop.start();
+    if (!reducedMotion) loop.start();
     const tipTimer = setInterval(() => setTipIndex((i) => (i + 1) % TIPS.length), 3400);
     const progressTimer = setInterval(() => setProgress((p) => Math.min(0.92, p + (0.92 - p) * 0.08)), 220);
     return () => {
@@ -30,7 +31,7 @@ export function BootScreen() {
       clearInterval(tipTimer);
       clearInterval(progressTimer);
     };
-  }, [pulse]);
+  }, [pulse, reducedMotion]);
 
   const portrait = width < 600;
 

@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { terrainHeight } from '../world/terrain';
 
@@ -10,6 +10,7 @@ export function ThreatActor({ shadows }: { shadows: boolean }) {
   const legs = useRef<(THREE.Group | null)[]>([]);
   const head = useRef<THREE.Group>(null);
   const phase = useRef(0);
+  const wasVisible = useRef(false);
   const eyeMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: '#FF7A5C' }), []);
   const hideMaterial = useMemo(() => new THREE.MeshLambertMaterial({ color: '#201A1B' }), []);
   const boneMaterial = useMemo(() => new THREE.MeshLambertMaterial({ color: '#3A2E2B' }), []);
@@ -20,12 +21,18 @@ export function ThreatActor({ shadows }: { shadows: boolean }) {
     const threat = engine?.getThreat();
     if (!threat) {
       root.current.visible = false;
+      wasVisible.current = false;
       return;
     }
     root.current.visible = true;
     const y = terrainHeight(threat.x, threat.z);
     const target = new THREE.Vector3(threat.x, y, threat.z);
-    root.current.position.lerp(target, Math.min(1, delta * 10));
+    if (!wasVisible.current) {
+      root.current.position.copy(target);
+      wasVisible.current = true;
+    } else {
+      root.current.position.lerp(target, Math.min(1, delta * 10));
+    }
     const p = engine!.state.player;
     const angle = Math.atan2(p.x - threat.x, -(p.z - threat.z));
     root.current.rotation.y = angle;

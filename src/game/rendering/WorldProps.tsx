@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { terrainHeight } from '../world/terrain';
 import { STRUCTURES } from '../../data/recipes';

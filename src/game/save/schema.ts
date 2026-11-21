@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { GameSave } from '../types';
 import { SAVE_SCHEMA_VERSION } from '../engine/constants';
+import { ITEMS } from '../../data/items';
+import { RECIPES, STRUCTURES } from '../../data/recipes';
 
 const inventorySlot = z.object({ id: z.string().min(1), qty: z.number().int().positive() }).nullable();
 
@@ -120,6 +122,18 @@ export function validateSave(raw: unknown): ValidationResult {
     save.storage.slots = slots;
   }
   if (save.player.health <= 0) save.player.health = 50;
+
+  // Drop references to content that no longer exists instead of crashing the UI.
+  const knownItem = (id: string): boolean => Object.prototype.hasOwnProperty.call(ITEMS, id);
+  save.inventory.slots = save.inventory.slots.map((slot) =>
+    slot && knownItem(slot.id) ? slot : null,
+  );
+  save.storage.slots = save.storage.slots.map((slot) =>
+    slot && knownItem(slot.id) ? slot : null,
+  );
+  save.structures = save.structures.filter((s) => Object.prototype.hasOwnProperty.call(STRUCTURES, s.defId));
+  save.crafting = save.crafting.filter((j) => Object.prototype.hasOwnProperty.call(RECIPES, j.recipeId));
+  if (save.player.equipped && !knownItem(save.player.equipped)) save.player.equipped = null;
   return { ok: true, save };
 }
 

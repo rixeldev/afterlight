@@ -272,13 +272,13 @@ export function generateDecor(): WorldDecor {
     const z = (rng() * 2 - 1) * 66;
     if (lakeFactor(x, z) < 1.16) continue;
     if (terrainHeight(x, z) < WATER_LEVEL + 0.2) continue;
-    grass.push({ x, z, scale: 0.7 + rng() * 0.9, rot: rng() * Math.PI, variant: i % 3 });
+    grass.push({ x, z, scale: 0.3 + rng() * 0.42, rot: rng() * Math.PI, variant: i % 3 });
   }
   for (let i = 0; i < 90; i += 1) {
     const x = (rng() * 2 - 1) * 60;
     const z = (rng() * 2 - 1) * 60;
     if (lakeFactor(x, z) < 1.22 || Math.hypot(x, z) < 14) continue;
-    ferns.push({ x, z, scale: 0.8 + rng() * 0.7, rot: rng() * Math.PI * 2, variant: i % 2 });
+    ferns.push({ x, z, scale: 0.55 + rng() * 0.45, rot: rng() * Math.PI * 2, variant: i % 2 });
   }
   for (let i = 0; i < 70; i += 1) {
     const x = (rng() * 2 - 1) * 68;

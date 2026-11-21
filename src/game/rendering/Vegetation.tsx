@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { generateDecor } from '../world/layout';
 import { terrainHeight } from '../world/terrain';
@@ -92,7 +92,12 @@ export function useWorldRevision(): number {
     const id = setInterval(() => {
       const engine = getEngine();
       if (!engine) return;
-      const next = engine.nodeRevision * 13 + engine.state.structures.length * 3 + (engine.getThreat() ? 1 : 0);
+      const production = engine.state.structures.reduce((n, s) => n + (s.pending ?? 0), 0);
+      const next =
+        engine.nodeRevision * 13 +
+        engine.state.structures.length * 3 +
+        production +
+        (engine.getThreat() ? 1 : 0);
       setRev((prev) => (prev === next ? prev : next));
     }, 450);
     return () => clearInterval(id);
@@ -199,9 +204,9 @@ export function Vegetation({
         y: terrainHeight(d.x, d.z),
         z: d.z,
         rot: d.rot,
-        sx: d.scale * 1.5,
-        sy: d.scale * 1.7,
-        sz: d.scale * 1.5,
+        sx: d.scale * 1.35,
+        sy: d.scale * 1.55,
+        sz: d.scale * 1.35,
       }));
     const pebbleItems = decor.pebbles.map<Xform>((d) => ({
       x: d.x,
@@ -237,7 +242,7 @@ export function Vegetation({
   }, [revision, decor, quality]);
 
   const bladeGeometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.09, 1.0, 3, 1, true);
+    const geo = new THREE.ConeGeometry(0.05, 0.62, 3, 1, true);
     geo.translate(0, 0.5, 0);
     geo.rotateX(0.12);
     return geo;

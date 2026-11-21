@@ -36,6 +36,21 @@ describe('save schema', () => {
     if (result.ok) expect(result.save.inventory.slots).toHaveLength(24);
   });
 
+  it('drops references to content that no longer exists', () => {
+    const save = createNewSave();
+    save.inventory.slots[0] = { id: 'removed_item', qty: 5 };
+    save.player.equipped = 'removed_tool';
+    save.structures = [{ id: 's_9', defId: 'removed_structure', x: 0, z: 0, rot: 0, builtAt: 0 }];
+    save.crafting = [{ id: 'j1', recipeId: 'removed_recipe', startedAt: 0, endsAt: 1 }];
+    const result = validateSave(save);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.save.inventory.slots[0]).toBeNull();
+    expect(result.save.player.equipped).toBeNull();
+    expect(result.save.structures).toHaveLength(0);
+    expect(result.save.crafting).toHaveLength(0);
+  });
+
   it('serialises node harvest state', () => {
     const save = createNewSave();
     save.nodes['tree_001'] = { charges: 0, respawnAt: 200 };

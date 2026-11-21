@@ -1,15 +1,15 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber/native';
 import { getEngine } from '../runtime/session';
 import { terrainHeight } from '../world/terrain';
 
-const COAT = '#3E5A4A';
-const COAT_DARK = '#2C4437';
-const SKIN = '#C9A583';
-const SCARF = '#C9A46C';
+const COAT = '#5A8069';
+const COAT_DARK = '#436354';
+const SKIN = '#D8B592';
+const SCARF = '#DDBB7E';
 const BELT = '#4A3A2A';
-const BOOT = '#332A22';
+const BOOT = '#41352B';
 
 export function PlayerAvatar({ shadows }: { shadows: boolean }) {
   const root = useRef<THREE.Group>(null);

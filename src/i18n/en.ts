@@ -47,6 +47,11 @@ export const en = {
   'hud.tracked': 'Tracking',
   'hud.fps': '{fps} fps',
   'hud.new_quest': 'New objective',
+  'dock.pack': 'Pack',
+  'dock.craft': 'Craft',
+  'dock.build': 'Build',
+  'dock.map': 'Map',
+  'dock.journal': 'Log',
 
   'interact.chop': 'Chop tree',
   'interact.chop_tool': 'Chop tree · axe',

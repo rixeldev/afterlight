@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, ImageBackground, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -8,7 +8,7 @@ import { C, R, SP } from '../theme';
 import { AppText, Button } from '../components/Primitives';
 import { Icon } from '../components/Icon';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useT } from '../../state/settingsStore';
+import { useSettings, useT } from '../../state/settingsStore';
 import { useSession } from '../../state/sessionStore';
 import { formatPlaytime } from '../../i18n';
 
@@ -29,6 +29,7 @@ export function MainMenuScreen() {
   const openPanel = useSession((s) => s.openPanel);
   const [confirmNew, setConfirmNew] = useState(false);
   const [busy, setBusy] = useState(false);
+  const reducedMotion = useSettings((s) => s.settings.reducedMotion);
 
   const fade = useRef(new Animated.Value(0)).current;
   const rise = useRef(new Animated.Value(22)).current;
@@ -39,6 +40,7 @@ export function MainMenuScreen() {
       Animated.timing(fade, { toValue: 1, duration: 900, useNativeDriver: true }),
       Animated.timing(rise, { toValue: 0, duration: 1000, useNativeDriver: true }),
     ]).start();
+    if (reducedMotion) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(fog, { toValue: 1, duration: 14000, useNativeDriver: true }),
@@ -47,7 +49,7 @@ export function MainMenuScreen() {
     );
     loop.start();
     return () => loop.stop();
-  }, [fade, rise, fog]);
+  }, [fade, rise, fog, reducedMotion]);
 
 
   const compact = height < 420 || width < 760;
@@ -64,9 +66,10 @@ export function MainMenuScreen() {
   };
 
   return (
-    <ImageBackground source={keyart} style={styles.root} resizeMode="cover">
+    <View style={styles.root}>
+      <Image source={keyart} style={styles.bgImage} resizeMode="cover" />
       <LinearGradient
-        colors={['rgba(4,10,9,0.86)', 'rgba(4,10,9,0.25)', 'rgba(4,10,9,0.9)']}
+        colors={['rgba(4,10,9,0.82)', 'rgba(4,10,9,0.18)', 'rgba(4,10,9,0.88)']}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -92,18 +95,24 @@ export function MainMenuScreen() {
                 {t('app.tagline')}
               </AppText>
             </View>
-            <AppText variant="display" style={[styles.title, compact ? { fontSize: 40 } : null]}>
+            <AppText
+              variant="display"
+              style={[styles.title, compact ? { fontSize: 34, lineHeight: 40, letterSpacing: 4 } : null]}
+            >
               {t('app.title')}
             </AppText>
-            <AppText variant="body" color={C.textSecondary} style={{ marginTop: 6, maxWidth: 420 }}>
-              {t('region.greenhaven.subtitle')} — {t('map.subtitle')}
-            </AppText>
+            {!compact ? (
+              <AppText variant="body" color={C.textSecondary} style={{ marginTop: 6, maxWidth: 420 }}>
+                {t('region.greenhaven.subtitle')} — {t('map.subtitle')}
+              </AppText>
+            ) : null}
 
             <View style={styles.menu}>
               {saveInfo.exists ? (
                 <Button
                   label={busy ? t('common.loading') : t('menu.continue')}
                   icon="play"
+                  compact={compact}
                   onPress={() => void start('continue')}
                   full
                 />
@@ -111,6 +120,7 @@ export function MainMenuScreen() {
               <Button
                 label={busy && !saveInfo.exists ? t('common.loading') : t('menu.new_game')}
                 icon="sparkle"
+                compact={compact}
                 variant={saveInfo.exists ? 'secondary' : 'primary'}
                 onPress={() => (saveInfo.exists ? setConfirmNew(true) : void start('new'))}
                 full
@@ -121,14 +131,18 @@ export function MainMenuScreen() {
               </View>
             </View>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, compact ? { marginTop: SP.sm } : null]}>
               <AppText variant="micro" color={C.textMuted}>
                 {t('app.version', { version: '0.1.0' })}
               </AppText>
-              <View style={styles.footerDot} />
-              <AppText variant="micro" color={C.textMuted}>
-                {t('app.offline')}
-              </AppText>
+              {!compact ? (
+                <>
+                  <View style={styles.footerDot} />
+                  <AppText variant="micro" color={C.textMuted}>
+                    {t('app.offline')}
+                  </AppText>
+                </>
+              ) : null}
             </View>
           </Animated.View>
         </View>
@@ -214,18 +228,19 @@ export function MainMenuScreen() {
           void start('new');
         }}
       />
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
+  bgImage: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   fog: { position: 'absolute', left: 0, right: 0, bottom: 80, height: 260 },
   content: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: SP.xl },
   left: { flex: 1.25, justifyContent: 'flex-end' },
   markRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   title: { fontSize: 64, letterSpacing: 6, lineHeight: 70 },
-  menu: { marginTop: SP.lg, gap: 8, maxWidth: 380 },
+  menu: { marginTop: SP.md, gap: 6, maxWidth: 380 },
   secondaryRow: { flexDirection: 'row', gap: 8 },
   footer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: SP.lg },
   footerDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: C.textMuted },

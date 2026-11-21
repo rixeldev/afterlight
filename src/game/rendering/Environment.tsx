@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import { getEngine } from '../runtime/session';
 
 type Stop = { h: number; top: string; horizon: string; sun: string; ambient: number; direct: number; fog: string };
 
 const STOPS: Stop[] = [
-  { h: 0, top: '#04080D', horizon: '#121C24', sun: '#9FB4CC', ambient: 0.42, direct: 0.32, fog: '#0C161C' },
-  { h: 5, top: '#061016', horizon: '#1A2730', sun: '#9FB4CC', ambient: 0.42, direct: 0.3, fog: '#101B20' },
-  { h: 6.5, top: '#1B2C33', horizon: '#E0B487', sun: '#FFD9A0', ambient: 0.62, direct: 0.75, fog: '#6E7A6C' },
-  { h: 9, top: '#33505C', horizon: '#A9BCA6', sun: '#FFF3D6', ambient: 0.78, direct: 1.2, fog: '#8FA090' },
-  { h: 16, top: '#33505C', horizon: '#ACBDA4', sun: '#FFF0CC', ambient: 0.78, direct: 1.15, fog: '#8FA090' },
-  { h: 18.5, top: '#2A3140', horizon: '#D8916A', sun: '#FFB27A', ambient: 0.6, direct: 0.72, fog: '#7C7568' },
-  { h: 20.5, top: '#0B1520', horizon: '#29323A', sun: '#9FB4CC', ambient: 0.44, direct: 0.3, fog: '#1A2329' },
-  { h: 24, top: '#04080D', horizon: '#121C24', sun: '#9FB4CC', ambient: 0.42, direct: 0.32, fog: '#0C161C' },
+  { h: 0, top: '#050A10', horizon: '#17232C', sun: '#AFC4DA', ambient: 0.62, direct: 0.45, fog: '#101B20' },
+  { h: 5, top: '#071218', horizon: '#1E2C36', sun: '#AFC4DA', ambient: 0.62, direct: 0.42, fog: '#141F25' },
+  { h: 6.5, top: '#22363E', horizon: '#E8BE92', sun: '#FFDFAF', ambient: 0.85, direct: 0.95, fog: '#7C8878' },
+  { h: 9, top: '#3C5B68', horizon: '#B9CDCB', sun: '#FFF3D6', ambient: 1.1, direct: 1.45, fog: '#9FB2AA' },
+  { h: 16, top: '#3C5B68', horizon: '#B9CDCB', sun: '#FFF0CC', ambient: 1.05, direct: 1.4, fog: '#9FB2AA' },
+  { h: 18.5, top: '#31384A', horizon: '#E09C74', sun: '#FFC08A', ambient: 0.82, direct: 0.9, fog: '#8C8476' },
+  { h: 20.5, top: '#0D1824', horizon: '#2F3B44', sun: '#AFC4DA', ambient: 0.6, direct: 0.4, fog: '#1E282E' },
+  { h: 24, top: '#050A10', horizon: '#17232C', sun: '#AFC4DA', ambient: 0.62, direct: 0.45, fog: '#101B20' },
 ];
 
 const COLOR_CACHE = STOPS.map((s) => ({
@@ -172,7 +172,9 @@ export function Environment({ quality }: { quality: 'low' | 'medium' | 'high' })
 
   return (
     <>
-      <hemisphereLight ref={hemi} args={['#9FB7A8', '#2C3B33', 0.7]} />
+      <hemisphereLight ref={hemi} args={['#C4D6C6', '#465A4B', 1.15]} />
+      <ambientLight intensity={0.38} color="#D7E3D6" />
+      <directionalLight position={[-32, 28, -36]} intensity={0.55} color="#A9C9C4" />
       <directionalLight
         ref={sunLight}
         position={[40, 90, 30]}

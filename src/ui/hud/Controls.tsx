@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { C, FONT, R, SP } from '../theme';
+import { C, FONT, R } from '../theme';
 import { Icon } from '../components/Icon';
 import { AppText, ProgressRing } from '../components/Primitives';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -101,7 +101,7 @@ export function Joystick({ leftHanded }: { leftHanded: boolean }) {
   );
 }
 
-export function SprintButton({ leftHanded }: { leftHanded: boolean }) {
+export function SprintButton() {
   const [sprint, setSprint] = useState(inputState.sprint);
   const stamina = useSession((s) => s.snapshot?.player.stamina ?? 100);
   useEffect(() => {
@@ -123,7 +123,6 @@ export function SprintButton({ leftHanded }: { leftHanded: boolean }) {
       accessibilityLabel="Sprint"
       style={[
         styles.sprint,
-        leftHanded ? { left: undefined, right: 148 } : null,
         sprint ? { backgroundColor: C.accentDim, borderColor: C.accentLine } : null,
       ]}
     >
@@ -214,20 +213,9 @@ export function ActionCluster({
       style={[styles.actionWrap, leftHanded ? { left: 18, right: undefined, alignItems: 'flex-start' } : null]}
       pointerEvents="box-none"
     >
-      <View style={styles.actionRow}>
-        <Pressable
-          onPress={attack}
-          accessibilityLabel="Attack"
-          style={[
-            styles.attackButton,
-            threat ? { borderColor: 'rgba(217,129,112,0.6)', backgroundColor: 'rgba(217,129,112,0.14)' } : null,
-          ]}
-        >
-          <Icon name="sword" size={22} color={threat ? '#F0B3A4' : C.textSecondary} />
-          {attackFlash > 0.2 ? <View style={styles.attackFlash} pointerEvents="none" /> : null}
-        </Pressable>
-        {target ? (
-          <View style={styles.actionLabel} pointerEvents="none">
+      {target ? (
+        <View style={[styles.actionLabelRow, leftHanded ? { justifyContent: 'flex-start' } : null]} pointerEvents="none">
+          <View style={styles.actionLabel}>
             <AppText variant="caption" color={C.text} numberOfLines={1} style={{ fontWeight: '600' }}>
               {label}
             </AppText>
@@ -237,63 +225,77 @@ export function ActionCluster({
               </AppText>
             ) : null}
           </View>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
-      <Pressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled}
-        accessibilityLabel={label}
-        style={({ pressed }) => [
-          styles.actionButton,
-          disabled ? { opacity: 0.5 } : null,
-          pressed ? { transform: [{ scale: 0.97 }] } : null,
-          action.type === 'gather' ? { borderColor: C.accentLine } : null,
-        ]}
-      >
-        <ProgressRing
-          progress={isGathering ? progress : 0}
-          size={92}
-          stroke={5}
-          color={C.accent}
-          track="rgba(233,240,226,0.14)"
+      <View style={styles.actionRow}>
+        <SprintButton />
+        <Pressable
+          onPress={attack}
+          accessibilityLabel="Attack"
+          style={[
+            styles.attackButton,
+            threat ? { borderColor: 'rgba(217,129,112,0.6)', backgroundColor: 'rgba(217,129,112,0.14)' } : null,
+          ]}
         >
-          <View style={styles.actionInner}>
-            <Icon
-              name={
-                action.type === 'gather'
-                  ? 'hand'
-                  : action.type === 'craft'
-                    ? 'craft'
-                    : action.type === 'storage'
-                      ? 'bag'
-                      : action.type === 'rest'
-                        ? 'home'
-                        : action.type === 'collect'
-                          ? 'sparkle'
-                          : 'target'
-              }
-              size={30}
-              color={disabled ? C.textMuted : C.accent}
-            />
-          </View>
-        </ProgressRing>
-      </Pressable>
-      <View style={[styles.attackSpacer]} />
+          <Icon name="sword" size={21} color={threat ? '#F0B3A4' : C.textSecondary} />
+          {attackFlash > 0.2 ? <View style={styles.attackFlash} pointerEvents="none" /> : null}
+        </Pressable>
+
+        <Pressable
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={disabled}
+          accessibilityLabel={label}
+          style={({ pressed }) => [
+            styles.actionButton,
+            disabled ? { opacity: 0.5 } : null,
+            pressed ? { transform: [{ scale: 0.97 }] } : null,
+            action.type === 'gather' ? { borderColor: C.accentLine } : null,
+          ]}
+        >
+          <ProgressRing
+            progress={isGathering ? progress : 0}
+            size={86}
+            stroke={5}
+            color={C.accent}
+            track="rgba(233,240,226,0.14)"
+          >
+            <View style={styles.actionInner}>
+              <Icon
+                name={
+                  action.type === 'gather'
+                    ? 'hand'
+                    : action.type === 'craft'
+                      ? 'craft'
+                      : action.type === 'storage'
+                        ? 'bag'
+                        : action.type === 'rest'
+                          ? 'home'
+                          : action.type === 'collect'
+                            ? 'sparkle'
+                            : 'target'
+                }
+                size={28}
+                color={disabled ? C.textMuted : C.accent}
+              />
+            </View>
+          </ProgressRing>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const DOCK_ITEMS: { id: Panel | 'build'; icon: string; labelKey: string }[] = [
-  { id: 'inventory', icon: 'backpack', labelKey: 'inv.title' },
-  { id: 'craft', icon: 'craft', labelKey: 'craft.title' },
-  { id: 'build', icon: 'home', labelKey: 'build.title' },
-  { id: 'map', icon: 'map', labelKey: 'map.title' },
-  { id: 'journal', icon: 'quest', labelKey: 'journal.title' },
+  { id: 'inventory', icon: 'backpack', labelKey: 'dock.pack' },
+  { id: 'craft', icon: 'craft', labelKey: 'dock.craft' },
+  { id: 'build', icon: 'home', labelKey: 'dock.build' },
+  { id: 'map', icon: 'map', labelKey: 'dock.map' },
+  { id: 'journal', icon: 'quest', labelKey: 'dock.journal' },
 ];
 
-export function Dock({ leftHanded }: { leftHanded: boolean }) {
+export function Dock() {
   const { t } = useT();
   const openPanel = useSession((s) => s.openPanel);
   const startBuild = useSession((s) => s.startBuild);
@@ -304,7 +306,8 @@ export function Dock({ leftHanded }: { leftHanded: boolean }) {
     return structures.reduce((n, st) => n + (st.pending ?? 0), 0);
   });
   return (
-    <View style={[styles.dock, leftHanded ? { left: SP.md, right: undefined } : { right: SP.md }]}>
+    <View style={styles.dockWrap} pointerEvents="box-none">
+    <View style={styles.dock}>
       {DOCK_ITEMS.map((item) => {
         const active = panel === item.id;
         const badge = item.id === 'craft' ? crafting : item.id === 'build' ? takeCount : 0;
@@ -320,7 +323,7 @@ export function Dock({ leftHanded }: { leftHanded: boolean }) {
             style={[styles.dockButton, active ? styles.dockButtonActive : null]}
           >
             <Icon name={item.icon} size={20} color={active ? C.accent : C.textSecondary} />
-            <AppText variant="micro" color={active ? C.accent : C.textMuted} style={{ fontSize: 8 }}>
+            <AppText variant="micro" color={active ? C.accent : C.textMuted} numberOfLines={1} style={{ fontSize: 7 }}>
               {t(item.labelKey)}
             </AppText>
             {badge > 0 ? (
@@ -333,6 +336,7 @@ export function Dock({ leftHanded }: { leftHanded: boolean }) {
           </Pressable>
         );
       })}
+    </View>
     </View>
   );
 }
@@ -558,12 +562,9 @@ const styles = StyleSheet.create({
   },
   joyDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(242,238,226,0.45)' },
   sprint: {
-    position: 'absolute',
-    bottom: 24,
-    right: 148,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: C.border,
     backgroundColor: C.glass,
@@ -573,13 +574,14 @@ const styles = StyleSheet.create({
   },
   actionWrap: {
     position: 'absolute',
-    bottom: 18,
-    right: 18,
+    bottom: 16,
+    right: 16,
     alignItems: 'flex-end',
   },
-  actionRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 8 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  actionLabelRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 },
   actionLabel: {
-    maxWidth: 180,
+    maxWidth: 200,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: R.pill,
@@ -588,20 +590,20 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   attackButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 1,
     borderColor: C.border,
     backgroundColor: C.glass,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  attackFlash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 29, backgroundColor: 'rgba(255,255,255,0.14)' },
+  attackFlash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.14)' },
   actionButton: {
-    width: 98,
-    height: 98,
-    borderRadius: 49,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     borderWidth: 1.5,
     borderColor: C.borderStrong,
     backgroundColor: 'rgba(8,19,15,0.72)',
@@ -609,33 +611,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionInner: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: C.accentDim,
     alignItems: 'center',
     justifyContent: 'center',
   },
   attackSpacer: { height: 0 },
+  dockWrap: { position: 'absolute', left: 0, right: 0, bottom: 14, alignItems: 'center' },
   dock: {
-    position: 'absolute',
-    bottom: 18,
-    right: 18,
     flexDirection: 'row',
-    gap: 4,
-    padding: 6,
+    gap: 2,
+    padding: 5,
     borderRadius: R.lg,
-    backgroundColor: 'rgba(6,14,12,0.6)',
+    backgroundColor: 'rgba(6,14,12,0.64)',
     borderWidth: 1,
     borderColor: C.border,
   },
   dockButton: {
-    width: 56,
-    height: 50,
-    borderRadius: R.md,
+    width: 48,
+    height: 44,
+    borderRadius: R.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 2,
   },
   dockButtonActive: { backgroundColor: C.accentDim },
   dockBadge: {
