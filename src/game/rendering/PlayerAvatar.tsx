@@ -26,6 +26,7 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
   const phase = useRef(0);
   const last = useRef({ x: 0, z: 0 });
   const grounded = useRef(0);
+  const smoothY = useRef<number | null>(null);
 
   const legGeometry = useMemo(() => new THREE.CapsuleGeometry(0.11, 0.42, 3, 7), []);
   const armGeometry = useMemo(() => new THREE.CapsuleGeometry(0.088, 0.36, 3, 7), []);
@@ -43,7 +44,10 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
     const engine = getEngine();
     if (!engine || !root.current) return;
     const p = engine.state.player;
-    const y = terrainHeight(p.x, p.z);
+    const groundY = terrainHeight(p.x, p.z);
+    if (smoothY.current === null) smoothY.current = groundY;
+    smoothY.current += (groundY - smoothY.current) * Math.min(1, delta * 20);
+    const y = smoothY.current;
     root.current.position.set(p.x, y, p.z);
     root.current.rotation.y = p.facing + Math.PI;
 

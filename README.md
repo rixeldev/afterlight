@@ -119,7 +119,7 @@ Quality gates:
 
 ```bash
 npm run typecheck  # TypeScript strict, zero errors
-npm test           # 73 unit/integration tests
+npm test           # 80 unit/integration tests
 npm run lint       # ESLint, zero warnings
 npm run assets:build   # regenerate icons/models/textures from docs/ kit
 npm run audio:build    # re-synthesise all audio
@@ -182,7 +182,7 @@ src/
   i18n/                     en + es dictionaries
   services/                 audio, haptics, SQLite storage
   state/                    Zustand stores (settings, session)
-  tests/                    73 tests
+  tests/                    80 tests
   ui/                       design system, HUD, panels, overlays, screens
 tools/                      asset and audio factories
 docs/                       build guide, architecture, dev log, release notes

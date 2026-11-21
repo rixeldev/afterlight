@@ -61,6 +61,8 @@ behaviour or context lifecycle on real hardware.
   HUD and a full roadmap in the journal.
 - **Visual pass.** 256 px textures with generated normal maps, textured GLB/props, scrolling water
   ripples, instanced contact shadows, shadows on the Balanced preset and a cinematic vignette.
+- **Camera & life.** Camera pulls in before trunks, rocks, the cabin and structures; the survivor's
+  step height is smoothed. Birds circle the valley by day and fireflies drift around camp at night.
 - **Settings layout.** The custom slider was re-laid out with a measured track, a proper thumb and
   a dedicated value column; the sheet content is capped and centred.
 
@@ -100,7 +102,7 @@ Environment: Android API 37 x86_64, SwiftShader software GL, debug APK, Metro de
 - Seven node kinds incl. springs and story caches; charge-based depletion and timed respawn.
 - Hold-to-gather with progress ring, tool bonuses, skill scaling, capacity pre-check.
 - 24-slot inventory, stack limits, quick use, item details, equip/unequip, drop.
-- 73 automated tests across inventory, needs, building, quests, saves and engine flows.
+- 80 automated tests across inventory, needs, building, quests, saves and engine flows.
 
 ### Phase 3 — Crafting & building — Done
 

@@ -4,7 +4,7 @@
 
 ```bash
 npm run typecheck   # TypeScript strict
-npm test            # Jest (73 tests, 8 suites)
+npm test            # Jest (80 tests, 8 suites)
 npm run lint        # ESLint, zero warnings
 npx expo export --platform android --output-dir /tmp/afterlight-export   # Metro/Hermes bundle
 ```
@@ -19,6 +19,8 @@ npx expo export --platform android --output-dir /tmp/afterlight-export   # Metro
 | `engine.test.ts` | pause freeze, gathering, full pack, crafting, stations, building, sleep, collapse, threat, production |
 | `world.test.ts` | determinism, resource coverage, camp clearing, no underwater nodes, lakes/hills |
 | `i18n.test.ts` | key parity EN/ES, placeholders, interpolation, clock formatting |
+| `translations.test.ts` | literal `t()` keys and every dynamic content key resolve |
+| `goals.test.ts` | sequential director, rewards, no repeat awards |
 
 ## Installing on the phone
 
