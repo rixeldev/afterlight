@@ -30,6 +30,16 @@ describe('game engine', () => {
     expect(snap.player.health).toBe(100);
   });
 
+  it('advances the world clock at four game minutes per real minute', () => {
+    const engine = engineWith();
+    const before = engine.state.minutes;
+    const hunger = engine.state.player.hunger;
+    run(engine, 60);
+    expect(engine.state.minutes - before).toBeCloseTo(4, 1);
+    // ~0.52 hunger per game minute over four minutes.
+    expect(hunger - engine.state.player.hunger).toBeCloseTo(2.08, 1);
+  });
+
   it('freezes simulation while paused (dt = 0)', () => {
     const engine = engineWith();
     const before = engine.state.minutes;
@@ -192,14 +202,14 @@ describe('game engine', () => {
   it('regenerates harvested nodes after their respawn window', () => {
     const engine = engineWith();
     const fiber = engine.nodes.find((n) => n.kind === 'fiber')!;
-    engine.state.nodes[fiber.id] = { charges: 0, respawnAt: engine.state.minutes + 1 };
+    engine.state.nodes[fiber.id] = { charges: 0, respawnAt: engine.state.minutes + 0.05 };
     run(engine, 2);
     expect(engine.state.nodes[fiber.id]?.charges).toBe(fiber.charges);
   });
 
   it('updates world clock across days', () => {
     const engine = engineWith();
-    engine.state.minutes = MINUTES_PER_DAY - 1;
+    engine.state.minutes = MINUTES_PER_DAY - 0.05;
     run(engine, 2);
     expect(engine.snapshot().day).toBe(2);
   });

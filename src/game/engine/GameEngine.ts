@@ -519,7 +519,7 @@ export class GameEngine {
       this.recomputeInteraction();
       return;
     }
-    const gameMinutes = dt * MINUTES_PER_SECOND * 60;
+    const gameMinutes = dt * MINUTES_PER_SECOND;
     this.runtime.lastCameraYaw = input.cameraYaw;
     this.runtime.sinceDamage += dt;
     this.runtime.attackCooldown = Math.max(0, this.runtime.attackCooldown - dt);
