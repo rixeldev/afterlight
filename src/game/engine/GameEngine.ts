@@ -28,6 +28,7 @@ import {
   removeItem,
   resizeInventory,
   freeSlots,
+  sortInventory,
 } from '../inventory/inventory';
 import {
   applySkillXp,
@@ -1635,6 +1636,13 @@ export class GameEngine {
     this.haptic('success');
     this.emit({ type: 'threat:driven-off' });
     this.advanceQuest('drive_off', 'stalker', 1);
+    this.requestSave();
+  }
+
+  sortInventory(): void {
+    this.state.inventory = sortInventory(this.state.inventory);
+    this.toast('info', 'toast.inventory_sorted');
+    this.sfx(SFX.uiTap);
     this.requestSave();
   }
 

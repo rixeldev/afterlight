@@ -109,6 +109,8 @@ export const es: Dictionary = {
   'toast.auto_nothing': 'AUTO no encuentra nada cerca para recolectar',
   'hud.auto': 'AUTO',
 
+  'toast.inventory_sorted': 'Mochila ordenada',
+  'inv.sort': 'Ordenar',
   'toast.level_up': 'Nivel {level} alcanzado',
   'toast.skill_up': '{skill} mejoró a {level}',
   'toast.unsafe_quit': 'De vuelta al menú — progreso guardado',

@@ -23,6 +23,8 @@ import { ThreatActor } from './ThreatActor';
 import { ImpactFx } from './ImpactFx';
 import { Wildlife } from './Wildlife';
 import { LakeLife } from './LakeLife';
+import { RuinProps } from './RuinProps';
+import { STRUCTURES } from '../../data/recipes';
 import { AppText, Button } from '../../ui/components/Primitives';
 import { C } from '../../ui/theme';
 import { useSettings, useT } from '../../state/settingsStore';
@@ -68,6 +70,7 @@ function CameraRig() {
   const desired = useRef(new THREE.Vector3());
   const target = useRef(new THREE.Vector3());
   const initialized = useRef(false);
+  const allowedDistance = useRef(inputState.cameraDistance);
 
   useFrame((state, delta) => {
     const engine = getEngine();
@@ -77,12 +80,36 @@ function CameraRig() {
     const pitch = inputState.cameraPitch;
     const yaw = inputState.cameraYaw;
     const dist = inputState.cameraDistance;
+    const dirX = Math.sin(yaw);
+    const dirZ = Math.cos(yaw);
+
+    // Keep the camera in front of trunks, canopies and buildings.
+    const wantedH = Math.cos(pitch) * dist;
+    let allowedH = wantedH;
+    const consider = (ox: number, oz: number, radius: number) => {
+      const proj = ox * dirX + oz * dirZ;
+      if (proj < 0.6 || proj > allowedH + radius) return;
+      const perp = Math.abs(ox * dirZ - oz * dirX);
+      if (perp < radius + 0.4) allowedH = Math.min(allowedH, proj - radius - 0.2);
+    };
+    for (const node of engine.nodes) {
+      if (node.kind === 'tree') consider(node.x - p.x, node.z - p.z, 1.05 * node.scale);
+      else if (node.kind === 'rock') consider(node.x - p.x, node.z - p.z, 0.9 * node.scale);
+    }
+    consider(34 - p.x, -38 - p.z, 3.1);
+    for (const st of engine.state.structures) {
+      const def = STRUCTURES[st.defId];
+      if (def) consider(st.x - p.x, st.z - p.z, def.radius * 0.9);
+    }
+    allowedH = Math.max(4.2, Math.min(wantedH, allowedH));
+    allowedDistance.current += (allowedH - allowedDistance.current) * Math.min(1, delta * 12);
+    const h = allowedDistance.current;
 
     target.current.set(p.x, baseY + 1.15, p.z);
     desired.current.set(
-      p.x + Math.sin(yaw) * Math.cos(pitch) * dist,
-      baseY + 1.15 + Math.sin(pitch) * dist,
-      p.z + Math.cos(yaw) * Math.cos(pitch) * dist,
+      p.x + dirX * h,
+      baseY + 1.15 + Math.tan(pitch) * h,
+      p.z + dirZ * h,
     );
     const ground = terrainHeight(desired.current.x, desired.current.z) + 1.2;
     if (desired.current.y < ground) desired.current.y = ground;
@@ -105,7 +132,7 @@ function CameraRig() {
     }
     camera.lookAt(look.current);
     if (camera instanceof THREE.PerspectiveCamera) {
-      const wantFov = 48;
+      const wantFov = 55;
       if (Math.abs(camera.fov - wantFov) > 0.01) {
         camera.fov = wantFov;
         camera.updateProjectionMatrix();
@@ -131,6 +158,7 @@ function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
       <Vegetation revision={revision} shadows={shadows} quality={quality} />
       <StarterCamp shadows={shadows} />
       <Props />
+      <RuinProps />
       <RangerCamp shadows={shadows} />
       <Footbridge shadows={shadows} />
       <Lookout shadows={shadows} />
@@ -275,7 +303,7 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
           flat
           shadows={quality !== 'low'}
           gl={{ antialias: quality !== 'low' }}
-          camera={{ fov: 48, near: 0.12, far: 420, position: [0, 18, 12] }}
+          camera={{ fov: 55, near: 0.12, far: 420, position: [0, 18, 12] }}
           onCreated={({ gl, scene }) => {
             setGlReady(true);
             useSession.getState().setRendererFailed(false);

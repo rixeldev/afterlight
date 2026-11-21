@@ -78,6 +78,7 @@ export function Environment({ quality }: { quality: 'low' | 'medium' | 'high' })
   );
 
   const sunLight = useRef<THREE.DirectionalLight>(null);
+  const sunTarget = useRef<THREE.Object3D>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
   const sunDisc = useRef<THREE.Mesh>(null);
   const stars = useRef<THREE.Points>(null);
@@ -166,6 +167,15 @@ export function Environment({ quality }: { quality: 'low' | 'medium' | 'high' })
       const mat = stars.current.material as THREE.PointsMaterial;
       mat.opacity = Math.max(0, Math.min(0.9, uniforms.uNight.value * 0.8 - 0.08));
     }
+    // Keep the shadow frustum centred on the survivor: a fixed target left
+    // distant trees and structures with no shadow at all.
+    const world = getEngine();
+    if (world && sunLight.current && sunTarget.current) {
+      const p = world.state.player;
+      sunLight.current.target = sunTarget.current;
+      sunTarget.current.position.set(p.x, 0, p.z);
+      sunLight.current.position.set(p.x + 40, 90, p.z + 30);
+    }
     // The sky sphere must always contain the camera.
     void state;
   });
@@ -190,7 +200,9 @@ export function Environment({ quality }: { quality: 'low' | 'medium' | 'high' })
         shadow-camera-near={1}
         shadow-camera-far={180}
         shadow-bias={-0.0006}
+        shadow-radius={2.4}
       />
+      <object3D ref={sunTarget} />
       <mesh scale={[1, 1, 1]} frustumCulled={false}>
         <sphereGeometry args={[260, 24, 16]} />
         <shaderMaterial

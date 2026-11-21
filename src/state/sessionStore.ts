@@ -84,6 +84,7 @@ export interface SessionState {
   consumeItem: (id: string) => void;
   equip: (id: string) => void;
   dropItem: (id: string, qty: number) => void;
+  sortInventory: () => void;
   craft: (recipeId: string) => void;
   cancelCraft: (jobId: string) => void;
   collectStructure: (id: string) => void;
@@ -396,6 +397,10 @@ export const useSession = create<SessionState>((set, get) => ({
   },
   dropItem: (id, qty) => {
     getEngine()?.dropItem(id, qty);
+    get().sync();
+  },
+  sortInventory: () => {
+    getEngine()?.sortInventory();
     get().sync();
   },
   craft: (recipeId) => {

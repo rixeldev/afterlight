@@ -110,6 +110,8 @@ export const en = {
   'toast.auto_nothing': 'AUTO found nothing nearby to gather',
   'hud.auto': 'AUTO',
 
+  'toast.inventory_sorted': 'Backpack sorted',
+  'inv.sort': 'Sort',
   'toast.level_up': 'Level {level} reached',
   'toast.skill_up': '{skill} improved to {level}',
   'toast.unsafe_quit': 'Returned to menu — progress saved',

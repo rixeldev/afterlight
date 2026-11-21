@@ -160,7 +160,7 @@ export function Vegetation({
             sy: node.scale * (0.9 + ((node.x * 7) % 5) * 0.03),
             sz: node.scale,
           });
-          const palette = ['#A8D19A', '#8FBF86', '#B9D8A4', '#7FAE78', '#9CC98D'];
+          const palette = ['#79A86C', '#6A995F', '#8AB679', '#5E8C56', '#94BF82'];
           treeColors.push(palette[Math.abs(Math.round(node.x * 13 + node.z * 7)) % palette.length]!);
         }
       } else if (node.kind === 'rock') {
@@ -285,13 +285,13 @@ export function Vegetation({
     // A single tuft of six tapered blades in one geometry: one instance draws a
     // convincing clump instead of a lone cone.
     const positions: number[] = [];
-    for (let i = 0; i < 6; i += 1) {
-      const a = (i / 6) * Math.PI * 2 + (i % 2) * 0.33;
-      const height = 0.42 + (i % 3) * 0.13;
-      const lean = 0.1 + (i % 4) * 0.035;
-      const width = 0.034;
-      const bx = Math.cos(a) * 0.07;
-      const bz = Math.sin(a) * 0.07;
+    for (let i = 0; i < 9; i += 1) {
+      const a = (i / 9) * Math.PI * 2 + (i % 3) * 0.29;
+      const height = 0.38 + (i % 4) * 0.12;
+      const lean = 0.12 + (i % 5) * 0.04;
+      const width = 0.032;
+      const bx = Math.cos(a) * (0.05 + (i % 3) * 0.045);
+      const bz = Math.sin(a) * (0.05 + (i % 3) * 0.045);
       const tx = bx + Math.cos(a) * lean;
       const tz = bz + Math.sin(a) * lean;
       const px = -Math.sin(a) * width;
@@ -307,11 +307,11 @@ export function Vegetation({
   const bushGeometry = useMemo(() => new THREE.IcosahedronGeometry(0.62, 0), []);
   const berryGeometry = useMemo(() => new THREE.SphereGeometry(0.08, 5, 4), []);
   const grassMaterial = useMemo(
-    () => new THREE.MeshLambertMaterial({ color: '#5F854C', side: THREE.DoubleSide }),
+    () => new THREE.MeshLambertMaterial({ color: '#567A46', side: THREE.DoubleSide }),
     [],
   );
   const fernMaterial = useMemo(
-    () => new THREE.MeshLambertMaterial({ color: '#436A3E', side: THREE.DoubleSide }),
+    () => new THREE.MeshLambertMaterial({ color: '#3C5F38', side: THREE.DoubleSide }),
     [],
   );
   const fiberMaterial = useMemo(

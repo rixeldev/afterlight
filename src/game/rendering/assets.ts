@@ -257,6 +257,9 @@ export function decorateModelMaterial(material: THREE.Material): THREE.Material 
     next.side = THREE.FrontSide;
     next.needsUpdate = true;
   }
+  // Keep the authored semantic name: foliage/rock detail passes look parts up
+  // by material name after decoration replaced the material.
+  next.name = mesh.name;
   return next;
 }
 

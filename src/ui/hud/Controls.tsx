@@ -368,6 +368,8 @@ export function QuickBar() {
   const count = (id: string) =>
     inventory?.slots.reduce((n, slot) => (slot?.id === id ? n + slot.qty : n), 0) ?? 0;
   if (!inventory) return null;
+  const hungerLow = snapshot!.player.hunger < 24;
+  const thirstLow = snapshot!.player.thirst < 24;
   const items = [
     count('roasted_berries') > 0 ? 'roasted_berries' : 'wild_berries',
     count('clean_water') > 0 ? 'clean_water' : 'dirty_water',
@@ -386,9 +388,16 @@ export function QuickBar() {
                 if (qty > 0) consume(id);
               }}
               accessibilityLabel={id}
-              style={[styles.quickSlot, qty <= 0 ? { opacity: 0.38 } : null]}
+              style={[
+                styles.quickSlot,
+                qty <= 0 ? { opacity: 0.38 } : null,
+                (index === 0 && hungerLow) || (index === 1 && thirstLow) ? styles.quickAlert : null,
+              ]}
             >
-              <ItemIcon id={id} size={26} />
+              <ItemIcon id={id} size={23} />
+              {(index === 0 && hungerLow) || (index === 1 && thirstLow) ? (
+                <View style={styles.quickAlertDot} />
+              ) : null}
               <AppText variant="micro" color={C.text} style={styles.quickCount}>
                 {qty}
               </AppText>
@@ -745,8 +754,8 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   dockButton: {
-    width: 48,
-    height: 44,
+    width: 45,
+    height: 42,
     borderRadius: R.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -854,14 +863,24 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   quickSlot: {
-    width: 42,
-    height: 42,
+    width: 39,
+    height: 39,
     borderRadius: R.sm,
     backgroundColor: 'rgba(233,240,226,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(233,240,226,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  quickAlert: { borderColor: C.warning, backgroundColor: 'rgba(216,162,74,0.16)' },
+  quickAlertDot: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.warning,
   },
   quickCount: {
     position: 'absolute',

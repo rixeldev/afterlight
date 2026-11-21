@@ -15,6 +15,28 @@ export function resizeInventory(inv: InventoryState, size: number): InventorySta
   return { size, slots };
 }
 
+/**
+ * Groups the bag by category, then by item id, so materials stop being
+ * scattered between tools and food after a long trip.
+ */
+export function sortInventory(inv: InventoryState): InventoryState {
+  const order: Record<string, number> = { tool: 0, material: 1, food: 2, consumable: 3, quest: 4 };
+  const filled = inv.slots.filter((slot): slot is InventorySlot => Boolean(slot)).sort((a, b) => {
+    const defA = itemDef(a.id);
+    const defB = itemDef(b.id);
+    const groupA = order[defA.category] ?? 9;
+    const groupB = order[defB.category] ?? 9;
+    if (groupA !== groupB) return groupA - groupB;
+    if (defA.id !== defB.id) return defA.id.localeCompare(defB.id);
+    return b.qty - a.qty;
+  });
+  const slots = new Array<InventorySlot | null>(inv.size).fill(null);
+  filled.forEach((slot, i) => {
+    if (i < slots.length) slots[i] = slot;
+  });
+  return { size: inv.size, slots };
+}
+
 export function countItem(inv: InventoryState, itemId: string): number {
   return inv.slots.reduce((total, slot) => (slot?.id === itemId ? total + slot.qty : total), 0);
 }

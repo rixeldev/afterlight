@@ -1,4 +1,13 @@
-import { addItem, countItem, createInventory, craftableCount, consumeItems, removeItem, resizeInventory } from '../game/inventory/inventory';
+import {
+  addItem,
+  countItem,
+  createInventory,
+  craftableCount,
+  consumeItems,
+  removeItem,
+  resizeInventory,
+  sortInventory,
+} from '../game/inventory/inventory';
 
 describe('inventory', () => {
   it('creates the requested number of empty slots', () => {
@@ -6,6 +15,28 @@ describe('inventory', () => {
     expect(inv.size).toBe(4);
     expect(inv.slots).toHaveLength(4);
     expect(inv.slots.every((s) => s === null)).toBe(true);
+  });
+
+  it('sorts by category while keeping every stack and the slot count', () => {
+    let inv = createInventory(6);
+    inv = addItem(inv, 'wood_log', 5).inventory;
+    inv = addItem(inv, 'wild_berries', 3).inventory;
+    inv = addItem(inv, 'stone_axe', 1).inventory;
+    inv = addItem(inv, 'stone_chunk', 4).inventory;
+    inv = addItem(inv, 'clean_water', 2).inventory;
+    const sorted = sortInventory(inv);
+    expect(sorted.size).toBe(6);
+    expect(sorted.slots).toHaveLength(6);
+    expect(sorted.slots.map((s) => (s ? s.id : null))).toEqual([
+      'stone_axe',
+      'stone_chunk',
+      'wood_log',
+      'wild_berries',
+      'clean_water',
+      null,
+    ]);
+    expect(countItem(sorted, 'wood_log')).toBe(5);
+    expect(countItem(sorted, 'wild_berries')).toBe(3);
   });
 
   it('stacks up to the item limit and spills into a new slot', () => {

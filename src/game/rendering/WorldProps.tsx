@@ -116,6 +116,11 @@ function Barrel({ x, z, rot = 0 }: { x: number; z: number; rot?: number }) {
 function AbandonedProps() {
   return (
     <group>
+      <Crate x={4.4} z={-4.2} rot={0.5} scale={0.9} />
+      <Barrel x={-4.6} z={-1.2} rot={0.3} />
+      <mesh position={[4.1, terrainHeight(4.1, 2.4) + 0.07, 2.4]} rotation={[0.02, 0.8, 0.01]} material={PROP_BARK}>
+        <boxGeometry args={[2.1, 0.07, 0.32]} />
+      </mesh>
       <Crate x={30.4} z={-31.8} rot={0.35} />
       <Crate x={31.6} z={-30.9} rot={-0.2} scale={0.78} />
       <Crate x={27.8} z={-33.2} rot={1.2} scale={0.9} />

@@ -4,6 +4,63 @@ Living document. Newest entries on top.
 
 ---
 
+## 2026-11-21 — Isometric survival pass (controls, camera, living world)
+
+Goal: move the game towards the reference the player asked for — a *Last Day on Earth*-style
+top-down survival view — without losing the rotatable camera.
+
+### Input and camera
+
+- **One raw-touch layer** (`TouchControls`) now owns every open-world touch instead of two
+  `PanResponder`s. Two fingers work at the same time: the left thumb drives the stick while the
+  right thumb orbits the camera. Camera deltas are incremental and there is no inertia, so the
+  camera stops the moment the finger lifts.
+- The joystick home is fixed in the thumb corner (mirrored in left-handed mode); the knob returns
+  to it on release, it no longer "wanders" between touches.
+- Sensitivity default lowered (`0.85`) with a 0.05 slider step and two decimals; base yaw/pitch
+  rates reduced so the isometric view is not twitchy.
+- Default camera is high and far (pitch ~49°, 16.5 m, 55° FOV). The rig keeps the camera in front
+  of trunks, canopy clusters and buildings instead of clipping through them.
+
+### HUD
+
+- LDOE-style composition: survivor card (level ring, health, hunger/thirst, stamina) top-left,
+  tracked quest + next goal top-centre, circular **radar** and clock top-right, quick-use bar,
+  action cluster (interact/sprint/torch/rest) and a five-slot dock.
+- **AUTO**: walks to the nearest harvestable node, gathers it repeatedly, and cancels itself on a
+  threat, low needs or a full bag.
+- Quick slots highlight food/water when the corresponding need drops below 24.
+- Backpack can be **sorted** by category with one button.
+
+### World
+
+- Grass went from ~880 sparse cones to ~5,200 nine-blade tufts biased around the camp; ferns,
+  pebbles, logs and flowers roughly doubled.
+- Tree canopies got two extra lobes and two branches per tree; rocks gained a moss cap.
+- Reeds, cattail heads and lily pads around the lake; salvaged crates, barrels and planks at the
+  ranger camp; campfire and cabin-chimney smoke; butterflies by day.
+- **Root cause fix**: vegetation was excluded by the full POI discovery radius (18 m at the
+  homestead, 15 m at the ranger camp), so every tree was ≥21 m away and outside the isometric
+  frame. Vegetation now clears only a tight core around each POI.
+- Terrain albedo no longer uses a 2.1 brightness multiplier (it clipped to white and read as flat
+  paint); a finer 40× repeat, mottling and dry-grass patches restore surface detail.
+- Shadows follow the survivor and use a soft radius, so distant props cast shadows too.
+- New set dressing: utility poles with sagging wires along the ranger trail, a wrecked pickup, a
+  rowboat, and split-rail fencing near the homestead.
+
+### Player
+
+- Rebuilt avatar: hip/knee and shoulder/elbow joints, hood, face, gloves, belt, bedroll, a cloak
+  that reacts to speed and action poses for chopping, mining and harvesting.
+
+### Validation
+
+- `tsc --noEmit`, `expo lint` and **83 tests** pass (new: auto-gather, inventory sort).
+- Release APK rebuilt with a forced JS bundle. **On-device validation of this pass is pending:
+  the test phone disconnected from ADB mid-session.**
+
+---
+
 ## 2026-11-21 — Vertical slice implemented (Chapter 1)
 
 ### Phase 0 — Feasibility and setup

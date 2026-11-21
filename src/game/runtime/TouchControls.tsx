@@ -12,9 +12,9 @@ import { rotateCamera, setMove } from './input';
 import { C } from '../../ui/theme';
 import { Icon } from '../../ui/components/Icon';
 
-const BASE = 118;
-const KNOB = 52;
-const MAX = 46;
+const BASE = 106;
+const KNOB = 48;
+const MAX = 42;
 
 /**
  * One transparent layer owns every open-world touch. Because it is a single

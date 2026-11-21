@@ -19,8 +19,15 @@ interface Candidate {
   z: number;
 }
 
-function nearPoi(x: number, z: number, padding: number): boolean {
-  return POIS.some((p) => Math.hypot(x - p.x, z - p.z) < p.radius + padding);
+/**
+ * POI discovery radii are generous (18 m around the homestead) and were also
+ * keeping every tree outside the camera view. Vegetation only needs to clear
+ * the actual camp props, so it uses a tighter core radius.
+ */
+function nearPoiCore(x: number, z: number, padding: number): boolean {
+  return POIS.some(
+    (p) => Math.hypot(x - p.x, z - p.z) < Math.max(4, p.radius * 0.68) + padding,
+  );
 }
 
 function tooClose(nodes: Candidate[], x: number, z: number, spacing: number): boolean {
@@ -40,10 +47,10 @@ function sampleAround(
 
 function validTreeSpot(x: number, z: number): boolean {
   if (Math.hypot(x, z) > REGION.playRadius) return false;
-  if (Math.hypot(x - REGION.camp.x, z - REGION.camp.z) < 15) return false;
+  if (Math.hypot(x - REGION.camp.x, z - REGION.camp.z) < 11) return false;
   if (lakeFactor(x, z) < 1.22) return false;
   if (terrainHeight(x, z) < WATER_LEVEL + 0.35) return false;
-  if (nearPoi(x, z, 1.5)) return false;
+  if (nearPoiCore(x, z, 1)) return false;
   return true;
 }
 
@@ -61,12 +68,12 @@ export function generateHarvestNodes(): HarvestNode[] {
   // ── Trees: dense at the treeline, sparse in the clearing ────────────────
   const treeTarget = 118;
   for (let attempt = 0; attempt < 4200 && treeSpots.length < treeTarget; attempt += 1) {
-    const dist = 18 + Math.sqrt(rng()) * 58;
+    const dist = 12 + Math.sqrt(rng()) * 64;
     const angle = rng() * Math.PI * 2;
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     if (!validTreeSpot(x, z)) continue;
-    const edgeBias = Math.min(1, Math.max(0.18, (dist - 16) / 34));
+    const edgeBias = Math.min(1, Math.max(0.2, (dist - 10) / 36));
     if (rng() > edgeBias) continue;
     if (tooClose(treeSpots, x, z, 2.9)) continue;
     treeSpots.push({ x, z });
@@ -76,28 +83,6 @@ export function generateHarvestNodes(): HarvestNode[] {
       x,
       z,
       scale: 0.85 + rng() * 0.55,
-      rot: rng() * Math.PI * 2,
-      charges: 3,
-      yields: [{ id: 'wood_log', qty: 2 }],
-      toolKind: 'axe',
-      respawnMinutes: 26,
-    });
-  }
-
-  // A few landmark trees framing the homestead.
-  const landmarks: Candidate[] = [
-    { x: -11.5, z: -9.5 },
-    { x: 12.5, z: -6.5 },
-    { x: -8, z: 13.5 },
-    { x: 10.5, z: 13 },
-  ];
-  for (const spot of landmarks) {
-    nodes.push({
-      id: nextId('tree'),
-      kind: 'tree',
-      x: spot.x,
-      z: spot.z,
-      scale: 1.25,
       rot: rng() * Math.PI * 2,
       charges: 3,
       yields: [{ id: 'wood_log', qty: 2 }],
@@ -119,7 +104,7 @@ export function generateHarvestNodes(): HarvestNode[] {
       if (lakeFactor(spot.x, spot.z) < 1.2) continue;
       if (isUnderwater(spot.x, spot.z) || terrainHeight(spot.x, spot.z) < WATER_LEVEL + 0.3) continue;
       if (Math.hypot(spot.x, spot.z) < 16) continue;
-      if (nearPoi(spot.x, spot.z, 2)) continue;
+      if (nearPoiCore(spot.x, spot.z, 2)) continue;
       if (tooClose(rockSpots, spot.x, spot.z, 2.4)) continue;
       rockSpots.push(spot);
       const rich = rockSpots.length % 3 === 0;
@@ -143,12 +128,12 @@ export function generateHarvestNodes(): HarvestNode[] {
   // ── Berry bushes near the forest edge ───────────────────────────────────
   const bushSpots: Candidate[] = [];
   for (let attempt = 0; attempt < 900 && bushSpots.length < 24; attempt += 1) {
-    const dist = 15 + rng() * 34;
+    const dist = 11 + rng() * 38;
     const angle = rng() * Math.PI * 2;
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     if (lakeFactor(x, z) < 1.2 || isUnderwater(x, z) || terrainHeight(x, z) < WATER_LEVEL + 0.3) continue;
-    if (nearPoi(x, z, 1) || tooClose(bushSpots, x, z, 4.4)) continue;
+    if (nearPoiCore(x, z, 1) || tooClose(bushSpots, x, z, 4.4)) continue;
     bushSpots.push({ x, z });
     nodes.push({
       id: nextId('bush'),
@@ -171,7 +156,7 @@ export function generateHarvestNodes(): HarvestNode[] {
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     if (lakeFactor(x, z) < 1.14 || isUnderwater(x, z) || terrainHeight(x, z) < WATER_LEVEL + 0.2) continue;
-    if (nearPoi(x, z, 0.5) || tooClose(fiberSpots, x, z, 3.4)) continue;
+    if (nearPoiCore(x, z, 0.5) || tooClose(fiberSpots, x, z, 3.4)) continue;
     fiberSpots.push({ x, z });
     nodes.push({
       id: nextId('fiber'),
@@ -269,26 +254,31 @@ export function generateDecor(): WorldDecor {
   const logs: DecorItem[] = [];
   const flowers: DecorItem[] = [];
 
-  for (let i = 0; i < 520; i += 1) {
-    const x = (rng() * 2 - 1) * 66;
-    const z = (rng() * 2 - 1) * 66;
+  // Grass carries most of the ground read, so it is dense around the camp and
+  // thins out towards the treeline instead of being an even sprinkle.
+  for (let i = 0; i < 5200; i += 1) {
+    const near = rng() < 0.72;
+    const dist = near ? 3 + Math.sqrt(rng()) * 30 : 30 + rng() * 42;
+    const angle = rng() * Math.PI * 2;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist;
     if (lakeFactor(x, z) < 1.16) continue;
     if (terrainHeight(x, z) < WATER_LEVEL + 0.2) continue;
-    grass.push({ x, z, scale: 0.3 + rng() * 0.42, rot: rng() * Math.PI, variant: i % 3 });
+    grass.push({ x, z, scale: 0.42 + rng() * 0.55, rot: rng() * Math.PI, variant: i % 4 });
   }
-  for (let i = 0; i < 90; i += 1) {
+  for (let i = 0; i < 170; i += 1) {
     const x = (rng() * 2 - 1) * 60;
     const z = (rng() * 2 - 1) * 60;
     if (lakeFactor(x, z) < 1.22 || Math.hypot(x, z) < 14) continue;
     ferns.push({ x, z, scale: 0.55 + rng() * 0.45, rot: rng() * Math.PI * 2, variant: i % 2 });
   }
-  for (let i = 0; i < 70; i += 1) {
+  for (let i = 0; i < 120; i += 1) {
     const x = (rng() * 2 - 1) * 68;
     const z = (rng() * 2 - 1) * 68;
     if (lakeFactor(x, z) < 1.1) continue;
     pebbles.push({ x, z, scale: 0.3 + rng() * 0.5, rot: rng() * Math.PI * 2, variant: i % 2 });
   }
-  for (let i = 0; i < 12; i += 1) {
+  for (let i = 0; i < 20; i += 1) {
     const angle = rng() * Math.PI * 2;
     const dist = 18 + rng() * 36;
     const x = Math.cos(angle) * dist;
@@ -296,9 +286,9 @@ export function generateDecor(): WorldDecor {
     if (lakeFactor(x, z) < 1.25) continue;
     logs.push({ x, z, scale: 0.9 + rng() * 0.6, rot: rng() * Math.PI * 2, variant: i % 2 });
   }
-  for (let i = 0; i < 64; i += 1) {
+  for (let i = 0; i < 240; i += 1) {
     const angle = rng() * Math.PI * 2;
-    const dist = 10 + rng() * 32;
+    const dist = 4 + rng() * 38;
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     if (lakeFactor(x, z) < 1.2 || isUnderwater(x, z)) continue;

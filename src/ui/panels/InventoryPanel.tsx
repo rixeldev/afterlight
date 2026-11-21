@@ -17,6 +17,7 @@ export function InventoryPanel() {
   const consumeItem = useSession((s) => s.consumeItem);
   const equip = useSession((s) => s.equip);
   const drop = useSession((s) => s.dropItem);
+  const sortInventory = useSession((s) => s.sortInventory);
   const [selected, setSelected] = useState<string | null>(null);
   const { width } = useWindowDimensions();
   const nameOf = useItemName();
@@ -67,6 +68,8 @@ export function InventoryPanel() {
             —
           </AppText>
         ) : null}
+        <View style={{ flex: 1 }} />
+        <Button label={t('inv.sort')} icon="backpack" variant="secondary" compact onPress={sortInventory} />
       </View>
 
       <MeterBar value={usedSlots} max={capacity} color={C.accent} height={5} style={{ marginTop: 10 }} />

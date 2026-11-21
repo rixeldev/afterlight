@@ -108,7 +108,7 @@ export function Hud() {
       )}
 
       {hint ? (
-        <TutorialCoach hintKey={hint.hintKey} bottomOffset={panel === 'build' ? 220 : 160} />
+        <TutorialCoach hintKey={hint.hintKey} bottomOffset={panel === 'build' ? 210 : 150} />
       ) : null}
 
       <RestDialog open={restOpen} onClose={() => setRestOpen(false)} />
@@ -129,7 +129,7 @@ function ProfileCard() {
   return (
     <View style={styles.profile} pointerEvents="none">
       <View style={styles.profileTop}>
-        <ProgressRing progress={xpProgress} size={40} stroke={3} color={C.accent} track="rgba(233,240,226,0.14)">
+        <ProgressRing progress={xpProgress} size={34} stroke={2.6} color={C.accent} track="rgba(233,240,226,0.14)">
           <AppText variant="label" color={C.text} style={{ fontFamily: FONT.display }}>
             {player.level}
           </AppText>
@@ -144,9 +144,9 @@ function ProfileCard() {
         </View>
       </View>
       <View style={styles.healthRow}>
-        <Icon name="health" size={13} color="#9ED08C" />
-        <MeterBar value={player.health} color="#8FCB7E" height={8} style={{ flex: 1 }} />
-        <AppText variant="label" color="#C7E5BC" style={{ width: 30, textAlign: 'right' }}>
+        <Icon name="health" size={12} color="#9ED08C" />
+        <MeterBar value={player.health} color="#8FCB7E" height={7} style={{ flex: 1 }} />
+        <AppText variant="label" color="#C7E5BC" style={{ width: 26, textAlign: 'right', fontSize: 12 }}>
           {Math.round(player.health)}
         </AppText>
       </View>
@@ -160,7 +160,7 @@ function ProfileCard() {
         <Icon name="energy" size={12} color={C.stamina} />
         <MeterBar value={player.stamina} color={C.stamina} height={4} style={{ flex: 1 }} />
         <AppText variant="micro" color={C.textMuted}>
-          {saving ? t('hud.autosaving') : `Lv ${player.level}`}
+          {saving ? t('hud.autosaving') : `${Math.round(player.stamina)}%`}
         </AppText>
       </View>
     </View>
@@ -211,7 +211,7 @@ function ContextCard({ onPress }: { onPress: () => void }) {
           {done}/{total}
         </AppText>
       </View>
-      <AppText variant="heading" numberOfLines={1} style={{ fontSize: 16 }}>
+      <AppText variant="heading" numberOfLines={1} style={{ fontSize: 14 }}>
         {t(step.titleKey)}
       </AppText>
       {next ? (
@@ -381,25 +381,26 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: 8,
   },
   profile: {
-    width: 224,
-    padding: 8,
+    width: 186,
+    padding: 7,
     borderRadius: R.md,
     backgroundColor: 'rgba(5,13,11,0.72)',
     borderWidth: 1,
     borderColor: C.border,
-    gap: 4,
+    gap: 3,
   },
   profileTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   healthRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
   miniRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   context: {
     flex: 1,
-    maxWidth: 300,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    maxWidth: 262,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     borderRadius: R.md,
     backgroundColor: 'rgba(5,13,11,0.72)',
     borderWidth: 1,
@@ -417,9 +418,9 @@ const styles = StyleSheet.create({
   radarCluster: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   radarColumn: { alignItems: 'center', gap: 6, paddingTop: 1 },
   pauseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: C.border,
     backgroundColor: 'rgba(5,13,11,0.72)',

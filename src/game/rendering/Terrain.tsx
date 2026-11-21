@@ -23,8 +23,9 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
     const pos = geo.attributes.position as THREE.BufferAttribute;
     const colors = new Float32Array(pos.count * 3);
 
-    const grass = new THREE.Color('#7C9A68');
-    const grassDark = new THREE.Color('#5B7B53');
+    const grass = new THREE.Color('#789760');
+    const grassDark = new THREE.Color('#526F4A');
+    const dry = new THREE.Color('#94A064');
     const dirt = new THREE.Color('#967C58');
     const rock = new THREE.Color('#8E9284');
     const sand = new THREE.Color('#BEB28C');
@@ -49,8 +50,11 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
         color.copy(rock).lerp(grassDark, Math.max(0, 1.5 - slope * 0.5));
       } else {
         const macro = (Math.sin(x * 0.031 + z * 0.017) + Math.cos(x * 0.021 - z * 0.028) + 2) / 4;
-        color.copy(grass).lerp(grassDark, noise * 0.55 + macro * 0.35);
-        color.offsetHSL(0.004 * macro, 0.02 * macro, 0.01 * (macro - 0.5));
+        const micro = pseudoNoise(x * 4.1, z * 4.1);
+        const patch = (Math.sin(x * 0.12 + z * 0.08) + Math.cos(x * 0.07 - z * 0.13) + 2) / 4;
+        color.copy(grass).lerp(grassDark, 0.18 + noise * 0.3 + macro * 0.34);
+        if (patch > 0.62) color.lerp(dry, (patch - 0.62) * 0.55);
+        color.offsetHSL(0.003 * macro, 0.015 * micro, (micro - 0.5) * 0.045);
       }
       const campDist = Math.hypot(x, z);
       if (campDist < 13 && y > WATER_LEVEL) {
@@ -81,9 +85,11 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
     return geo;
   }, [segments]);
 
-  const texture = useMemo(() => getTexture('grass_albedo', lowQuality ? 18 : 30, 2.1), [lowQuality]);
-  const normalMap = useMemo(() => getNormalMap('grass_albedo', lowQuality ? 18 : 30, 1.1), [lowQuality]);
-  const normalScale = useMemo(() => new THREE.Vector2(0.8, 0.8), []);
+  // Brightness stays near 1 so the grass albedo keeps its detail; the old
+  // 2.1 multiplier clipped most pixels to white and read as flat paint.
+  const texture = useMemo(() => getTexture('grass_albedo', lowQuality ? 22 : 40, 1.62), [lowQuality]);
+  const normalMap = useMemo(() => getNormalMap('grass_albedo', lowQuality ? 22 : 40, 0.85), [lowQuality]);
+  const normalScale = useMemo(() => new THREE.Vector2(0.65, 0.65), []);
 
   return (
     <mesh geometry={geometry} receiveShadow={shadows} frustumCulled={false}>
