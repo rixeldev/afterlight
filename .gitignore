@@ -1,0 +1,57 @@
+# ─── Secrets: NEVER commit ───────────────────────────────────────────────
+keystore.properties
+*.keystore
+*.jks
+*.p12
+*.p8
+*.key
+*.mobileprovision
+*.pem
+.env
+.env.*
+!.env.example
+secrets/
+credentials.json
+google-services.json
+GoogleService-Info.plist
+
+# ─── Dependencies ────────────────────────────────────────────────────────
+node_modules/
+.pnp.*
+.yarn/*
+
+# ─── Expo / React Native ─────────────────────────────────────────────────
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+/android
+/ios
+*.tsbuildinfo
+
+# ─── Builds & artifacts ──────────────────────────────────────────────────
+*.apk
+*.aab
+*.ipa
+build-output/
+coverage/
+/artifacts/
+*.zip
+
+# ─── Editor / OS ─────────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.orig.*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# ─── Logs ────────────────────────────────────────────────────────────────
+*.log
+/tmp/
+
+# Local upload signing config — DO NOT PUBLISH
+keystore.properties

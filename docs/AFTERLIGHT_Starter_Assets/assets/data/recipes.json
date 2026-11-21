@@ -1,0 +1,45 @@
+[
+  {
+    "id": "stone_axe",
+    "name": "Stone Axe",
+    "station": "handcraft",
+    "durationSeconds": 2,
+    "inputs": {
+      "wood_log": 3,
+      "stone_chunk": 2,
+      "plant_fiber": 2
+    },
+    "outputs": {
+      "stone_axe": 1
+    },
+    "unlock": "starter"
+  },
+  {
+    "id": "campfire",
+    "name": "Campfire",
+    "station": "handcraft",
+    "durationSeconds": 3,
+    "inputs": {
+      "wood_log": 5,
+      "stone_chunk": 4
+    },
+    "outputs": {
+      "campfire_kit": 1
+    },
+    "unlock": "starter"
+  },
+  {
+    "id": "wooden_foundation",
+    "name": "Wooden Foundation",
+    "station": "workbench",
+    "durationSeconds": 5,
+    "inputs": {
+      "wood_log": 8,
+      "stone_chunk": 2
+    },
+    "outputs": {
+      "wooden_foundation": 1
+    },
+    "unlock": "workbench"
+  }
+]

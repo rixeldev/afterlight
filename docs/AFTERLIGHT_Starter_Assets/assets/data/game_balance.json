@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "player": {
+    "startingLevel": 1,
+    "startingHealth": 100,
+    "startingStamina": 100,
+    "startingInventory": {
+      "wood_log": 5,
+      "stone_chunk": 3,
+      "wild_berries": 5,
+      "clean_water": 2
+    }
+  },
+  "survival": {
+    "hungerDrainPerMinute": 0.15,
+    "thirstDrainPerMinute": 0.22,
+    "staminaRegenPerSecond": 4
+  },
+  "world": {
+    "chunkSize": 32,
+    "activeChunkRadius": 2,
+    "autosaveIntervalSeconds": 60
+  },
+  "gathering": {
+    "baseYield": 1,
+    "toolBonusMultiplier": 1.5
+  }
+}

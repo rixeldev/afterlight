@@ -1,0 +1,51 @@
+[
+  {
+    "id": "wood_log",
+    "name": "Wood Log",
+    "category": "material",
+    "stackLimit": 99,
+    "icon": "wood"
+  },
+  {
+    "id": "stone_chunk",
+    "name": "Stone Chunk",
+    "category": "material",
+    "stackLimit": 99,
+    "icon": "stone"
+  },
+  {
+    "id": "wild_berries",
+    "name": "Wild Berries",
+    "category": "food",
+    "stackLimit": 30,
+    "icon": "food"
+  },
+  {
+    "id": "clean_water",
+    "name": "Clean Water",
+    "category": "consumable",
+    "stackLimit": 20,
+    "icon": "water"
+  },
+  {
+    "id": "plant_fiber",
+    "name": "Plant Fiber",
+    "category": "material",
+    "stackLimit": 99,
+    "icon": "fiber"
+  },
+  {
+    "id": "scrap_metal",
+    "name": "Scrap Metal",
+    "category": "material",
+    "stackLimit": 99,
+    "icon": "scrap"
+  },
+  {
+    "id": "basic_medkit",
+    "name": "Basic Medkit",
+    "category": "consumable",
+    "stackLimit": 5,
+    "icon": "health"
+  }
+]

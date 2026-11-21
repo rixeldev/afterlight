@@ -1,0 +1,57 @@
+[
+  {
+    "id": "greenhaven",
+    "name": "Greenhaven",
+    "tier": 1,
+    "recommendedLevel": 1,
+    "biome": "temperate_forest",
+    "unlocksAt": "game_start",
+    "resourceTable": [
+      "wood_log",
+      "stone_chunk",
+      "wild_berries",
+      "plant_fiber"
+    ],
+    "pointsOfInterest": [
+      "Old Ranger Camp",
+      "Mossy Footbridge",
+      "Collapsed Lookout"
+    ]
+  },
+  {
+    "id": "silent_city",
+    "name": "Silent City",
+    "tier": 2,
+    "recommendedLevel": 8,
+    "biome": "overgrown_urban",
+    "unlocksAt": "greenhaven_story_03",
+    "resourceTable": [
+      "scrap_metal",
+      "clean_water",
+      "basic_medkit"
+    ],
+    "pointsOfInterest": [
+      "Corner Market",
+      "North Clinic",
+      "Transit Underpass"
+    ]
+  },
+  {
+    "id": "frostfall",
+    "name": "Frostfall",
+    "tier": 3,
+    "recommendedLevel": 16,
+    "biome": "alpine_snow",
+    "unlocksAt": "silent_city_story_04",
+    "resourceTable": [
+      "stone_chunk",
+      "scrap_metal",
+      "clean_water"
+    ],
+    "pointsOfInterest": [
+      "Weather Station",
+      "Frozen Relay",
+      "Pine Pass"
+    ]
+  }
+]

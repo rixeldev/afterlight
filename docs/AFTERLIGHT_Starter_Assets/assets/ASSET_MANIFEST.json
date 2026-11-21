@@ -1,0 +1,39 @@
+{
+  "project": "AFTERLIGHT",
+  "version": "0.1.0",
+  "note": "Original procedural blockout assets, not final production art.",
+  "models": [
+    "models/stylized_tree.glb",
+    "models/stylized_rock.glb",
+    "models/starter_cabin.glb"
+  ],
+  "textures": [
+    "textures/grass_albedo.png",
+    "textures/bark_albedo.png",
+    "textures/stone_albedo.png",
+    "textures/weathered_wood_albedo.png"
+  ],
+  "data": [
+    "items.json",
+    "recipes.json",
+    "regions.json",
+    "game_balance.json"
+  ],
+  "icons": [
+    "ui/icons/wood.svg",
+    "ui/icons/stone.svg",
+    "ui/icons/food.svg",
+    "ui/icons/water.svg",
+    "ui/icons/fiber.svg",
+    "ui/icons/scrap.svg",
+    "ui/icons/health.svg",
+    "ui/icons/home.svg",
+    "ui/icons/map.svg",
+    "ui/icons/craft.svg",
+    "ui/icons/energy.svg",
+    "ui/icons/backpack.svg"
+  ],
+  "reference": [
+    "reference/afterlight_moodboard.svg"
+  ]
+}
