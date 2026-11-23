@@ -4,6 +4,43 @@ Living document. Newest entries on top.
 
 ---
 
+## 2026-11-23 — Design polish: direction, readable HUD, defined motion
+
+Second pass of player feedback ("no direction, busy HUD, chaotic movement, texture faults").
+
+### The game now points somewhere
+
+- A bobbing golden beacon marks the world position of the current homestead goal: the nearest
+  rock while a pickaxe is needed, the homestead for build/cook goals, the actual POI for the
+  bridge and lookout trips, the threat while defending. It hides once you are within 6 m.
+- The tracking card dropped its header row; quest title, current objective and step counter sit
+  on two lines, with the next goal underneath.
+
+### HUD weight and notifications
+
+- Toasts deduplicate (refreshing the same pill instead of stacking copies), keep at most three in
+  the queue, two on screen, live 2.6 s and render as slim single-line pills at 19 % height — they
+  no longer collide with the top cards or cover the field.
+- The survivor card merged stamina into the hunger/thirst row and only prints "autosaving" while
+  it happens.
+- The threat card is one line plus a health bar.
+
+### Defined character motion
+
+- Every joint now eases towards target angles (10 Hz idle/walk, 14 Hz during actions) instead of
+  being assigned per frame, so poses blend across idle → walk → gather → strike.
+- The body turns smoothly towards the move direction (wrap-aware) instead of snapping, stride
+  rate dropped to 2.4–8 Hz, and swing amplitudes are ~25 % smaller. Idle is a quiet breath with a
+  slow look-around.
+
+### Ground and camera
+
+- Terrain mottling switched from sine waves (which left diagonal bands across the meadow) to
+  value noise; the dirt homestead clearing now has a noisy edge instead of a perfect circle.
+- Camera settles at 52.7° pitch / 17 m / 52° FOV, framing the treeline and a horizon sliver.
+
+---
+
 ## 2026-11-21 — Isometric survival pass (controls, camera, living world)
 
 Goal: move the game towards the reference the player asked for — a *Last Day on Earth*-style

@@ -11,6 +11,20 @@ const SCARF = '#DDBB7E';
 const BELT = '#4A3A2A';
 const BOOT = '#41352B';
 
+/** One set of joint angles for the damped pose blender. */
+interface Pose {
+  hipL: number;
+  hipR: number;
+  kneeL: number;
+  kneeR: number;
+  shL: number;
+  shR: number;
+  elL: number;
+  elR: number;
+  lean: number;
+  crouch: number;
+}
+
 export function PlayerAvatar({ shadows }: { shadows: boolean }) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -30,6 +44,12 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
   const flame = useRef<THREE.Mesh>(null);
   const shadowDisc = useRef<THREE.Mesh>(null);
   const phase = useRef(0);
+  const rotY = useRef(0);
+  const pose = useRef<Pose>({
+    hipL: 0, hipR: 0, kneeL: 0.06, kneeR: 0.06,
+    shL: -0.06, shR: -0.06, elL: 0.2, elR: 0.2,
+    lean: 0.02, crouch: 0,
+  });
   const last = useRef({ x: 0, z: 0 });
   const smoothY = useRef<number | null>(null);
 
@@ -54,108 +74,98 @@ export function PlayerAvatar({ shadows }: { shadows: boolean }) {
     const p = engine.state.player;
     const groundY = terrainHeight(p.x, p.z);
     if (smoothY.current === null) smoothY.current = groundY;
-    smoothY.current += (groundY - smoothY.current) * Math.min(1, delta * 20);
+    smoothY.current += (groundY - smoothY.current) * Math.min(1, delta * 14);
     root.current.position.set(p.x, smoothY.current, p.z);
-    root.current.rotation.y = p.facing + Math.PI;
+
+    // Turn smoothly instead of snapping: circling the stick no longer spins
+    // the body frame to frame.
+    const wantedFacing = p.facing + Math.PI;
+    let diff = wantedFacing - rotY.current;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    rotY.current += diff * Math.min(1, delta * 9);
+    root.current.rotation.y = rotY.current;
 
     const dx = p.x - last.current.x;
     const dz = p.z - last.current.z;
     const speed = Math.min(1, Math.hypot(dx, dz) / Math.max(0.0001, delta) / 4.5);
     last.current = { x: p.x, z: p.z };
-    phase.current += delta * (2.8 + speed * 7.6);
+    // One stride per half-second at a walk, ~2.5 at a sprint.
+    phase.current += delta * (2.4 + speed * 5.6);
 
     const action = engine.getActionInfo();
     const attack = engine.runtime.attackFlash;
     const swing = Math.sin(phase.current);
-    const cos = Math.cos(phase.current);
 
-    const setPose = (
-      hipL: number,
-      hipR: number,
-      kneeL: number,
-      kneeR: number,
-      shoulderL: number,
-      shoulderR: number,
-      elbowL: number,
-      elbowR: number,
-      lean: number,
-      crouch: number,
-    ) => {
-      if (leftLeg.current) leftLeg.current.rotation.x = hipL;
-      if (rightLeg.current) rightLeg.current.rotation.x = hipR;
-      if (leftKnee.current) leftKnee.current.rotation.x = kneeL;
-      if (rightKnee.current) rightKnee.current.rotation.x = kneeR;
-      if (leftArm.current) leftArm.current.rotation.x = shoulderL;
-      if (rightArm.current) rightArm.current.rotation.x = shoulderR;
-      if (leftElbow.current) leftElbow.current.rotation.x = elbowL;
-      if (rightElbow.current) rightElbow.current.rotation.x = elbowR;
-      if (body.current) {
-        body.current.rotation.x = lean;
-        body.current.position.y = crouch;
-        body.current.position.z = 0;
-      }
+    // Target joint angles, then ease every joint towards them so poses blend
+    // instead of teleporting between idle / walk / gather / strike.
+    let t: Pose = {
+      hipL: 0, hipR: 0, kneeL: 0.06, kneeR: 0.06,
+      shL: -0.06, shR: -0.06, elL: 0.2, elR: 0.2,
+      lean: 0.02, crouch: 0,
     };
-
     if (action) {
-      const pct = action.progress;
-      const arc = Math.sin(Math.min(1, pct) * Math.PI);
-      const chopping = action.kind === 'tree' || action.kind === 'rock' || action.kind === 'crate' || action.kind === 'cache';
+      const arc = Math.sin(Math.min(1, action.progress) * Math.PI);
+      const chopping =
+        action.kind === 'tree' || action.kind === 'rock' || action.kind === 'crate' || action.kind === 'cache';
       if (chopping) {
-        setPose(
-          0.14,
-          -0.08,
-          0.08,
-          0.16,
-          -0.4 - arc * 0.4,
-          -0.1 - arc * 2.15,
-          -0.35,
-          0.12 + arc * 0.55,
-          0.06 + arc * 0.17,
-          0,
-        );
+        t = {
+          hipL: 0.12, hipR: -0.06, kneeL: 0.1, kneeR: 0.14,
+          shL: -0.5 - arc * 0.35, shR: -0.2 - arc * 1.55,
+          elL: -0.3, elR: 0.15 + arc * 0.45,
+          lean: 0.1 + arc * 0.14, crouch: 0,
+        };
       } else {
-        setPose(
-          -0.35,
-          -0.2,
-          0.55,
-          0.42,
-          -0.5 - arc * 0.4,
-          -0.6 - arc * 1.15,
-          -0.4,
-          0.3 + arc * 0.5,
-          0.24 + arc * 0.18,
-          -0.13 * arc,
-        );
+        t = {
+          hipL: -0.3, hipR: -0.16, kneeL: 0.45, kneeR: 0.34,
+          shL: -0.45 - arc * 0.3, shR: -0.55 - arc * 0.85,
+          elL: -0.35, elR: 0.28 + arc * 0.4,
+          lean: 0.2 + arc * 0.14, crouch: -0.1 * arc,
+        };
       }
-      if (cloak.current) cloak.current.rotation.x = 0.08 + arc * 0.1;
-    } else {
-      const hip = swing * 0.58 * speed;
-      const kneeBack = Math.max(0, -swing) * 0.85 * speed;
-      const kneeFront = Math.max(0, swing) * 0.5 * speed;
-      setPose(
-        hip,
-        -hip,
-        kneeBack + 0.04,
-        kneeFront + 0.04,
-        -swing * 0.72 * speed,
-        swing * 0.55 * speed - attack * 1.9,
-        0.16 + Math.max(0, -swing) * 0.25 * speed,
-        0.18 + Math.max(0, swing) * 0.33 * speed + attack * 0.6,
-        speed * 0.07,
-        Math.abs(cos) * 0.03 * speed,
-      );
+      if (cloak.current) cloak.current.rotation.x = 0.08 + arc * 0.08;
+    } else if (speed > 0.02) {
+      const hip = swing * 0.46 * speed;
+      t = {
+        hipL: hip, hipR: -hip,
+        kneeL: Math.max(0, -swing) * 0.62 * speed + 0.06,
+        kneeR: Math.max(0, swing) * 0.42 * speed + 0.06,
+        shL: -swing * 0.44 * speed - 0.06,
+        shR: swing * 0.38 * speed - 0.06 - attack * 1.2,
+        elL: 0.22 + Math.max(0, -swing) * 0.18 * speed,
+        elR: 0.22 + Math.max(0, swing) * 0.24 * speed + attack * 0.45,
+        lean: 0.03 + speed * 0.06,
+        crouch: Math.abs(Math.cos(phase.current)) * 0.024 * speed,
+      };
       if (cloak.current) {
-        cloak.current.rotation.x = 0.05 + speed * 0.14;
-        cloak.current.rotation.z = Math.sin(phase.current * 0.5) * 0.04 * speed;
+        cloak.current.rotation.x = 0.05 + speed * 0.1;
+        cloak.current.rotation.z = Math.sin(phase.current * 0.5) * 0.03 * speed;
       }
-      if (body.current && speed < 0.02) {
-        body.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.008;
-        if (head.current) {
-          head.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.35) * 0.14;
-        }
-      } else if (head.current) {
-        head.current.rotation.y *= 0.9;
+    } else {
+      // Idle: quiet breathing, an occasional look around.
+      t.crouch = Math.sin(state.clock.elapsedTime * 1.5) * 0.008;
+      t.shL = -0.06 + Math.sin(state.clock.elapsedTime * 1.5) * 0.02;
+      if (head.current) {
+        head.current.rotation.y += (Math.sin(state.clock.elapsedTime * 0.3) * 0.12 - head.current.rotation.y) * Math.min(1, delta * 2);
       }
+      if (cloak.current) cloak.current.rotation.x += (0.05 - cloak.current.rotation.x) * Math.min(1, delta * 4);
+    }
+
+    const ease = Math.min(1, delta * (action ? 14 : 10));
+    for (const key of Object.keys(pose.current) as (keyof Pose)[]) {
+      pose.current[key] += (t[key] - pose.current[key]) * ease;
+    }
+    leftLeg.current!.rotation.x = pose.current.hipL;
+    rightLeg.current!.rotation.x = pose.current.hipR;
+    leftKnee.current!.rotation.x = pose.current.kneeL;
+    rightKnee.current!.rotation.x = pose.current.kneeR;
+    leftArm.current!.rotation.x = pose.current.shL;
+    rightArm.current!.rotation.x = pose.current.shR;
+    leftElbow.current!.rotation.x = pose.current.elL;
+    rightElbow.current!.rotation.x = pose.current.elR;
+    if (body.current) {
+      body.current.rotation.x = pose.current.lean;
+      body.current.position.y = pose.current.crouch;
     }
 
     const equipped = engine.state.player.equipped;

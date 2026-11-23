@@ -141,11 +141,14 @@ function pushToast(
   text: string,
   icon?: string,
 ): ToastItem[] {
+  // Gathering floods the queue with repeated lines: refresh the existing
+  // pill instead of stacking another copy.
+  const fresh = toasts.filter((t) => t.text !== text);
   const item: ToastItem = { id: toastSeq++, kind, text, icon, createdAt: Date.now() };
-  const next = [...toasts, item].slice(-4);
+  const next = [...fresh, item].slice(-3);
   setTimeout(() => {
     useSession.setState((state) => ({ toasts: state.toasts.filter((t) => t.id !== item.id) }));
-  }, 3200);
+  }, 2600);
   return next;
 }
 

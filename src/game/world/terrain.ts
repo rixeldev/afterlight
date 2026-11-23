@@ -66,6 +66,14 @@ export function lakeFactor(x: number, z: number): number {
   return Math.sqrt(dx * dx + dz * dz) + warp;
 }
 
+/**
+ * Smooth value noise in 0..1 for surface colouring. Sine-based mottling
+ * produced visible diagonal bands across the meadow; this does not.
+ */
+export function terrainTone(x: number, z: number, seed = WORLD_SEED): number {
+  return Math.min(1, fbm(x, z, seed, 2) / 0.75);
+}
+
 export function terrainHeight(x: number, z: number): number {
   let h = baseHeight(x, z);
 

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber/native';
 import * as THREE from 'three';
-import { terrainHeight, WATER_LEVEL } from '../world/terrain';
+import { terrainHeight, terrainTone, WATER_LEVEL, WORLD_SEED } from '../world/terrain';
 import { getNormalMap, getRippleNormal, getTexture } from './assets';
 
 const SIZE = 170;
@@ -40,7 +40,6 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
       const slope =
         Math.abs(terrainHeight(x + 0.8, z) - terrainHeight(x - 0.8, z)) +
         Math.abs(terrainHeight(x, z + 0.8) - terrainHeight(x, z - 0.8));
-      const noise = pseudoNoise(x, z);
       const color = new THREE.Color();
       if (y < WATER_LEVEL - 0.05) {
         color.copy(underwater).lerp(sand, Math.max(0, 1 - Math.abs(y - WATER_LEVEL) * 0.6));
@@ -49,17 +48,18 @@ export function Terrain({ shadows, lowQuality }: TerrainProps) {
       } else if (slope > 1.6) {
         color.copy(rock).lerp(grassDark, Math.max(0, 1.5 - slope * 0.5));
       } else {
-        const macro = (Math.sin(x * 0.031 + z * 0.017) + Math.cos(x * 0.021 - z * 0.028) + 2) / 4;
-        const micro = pseudoNoise(x * 4.1, z * 4.1);
-        const patch = (Math.sin(x * 0.12 + z * 0.08) + Math.cos(x * 0.07 - z * 0.13) + 2) / 4;
-        color.copy(grass).lerp(grassDark, 0.18 + noise * 0.3 + macro * 0.34);
-        if (patch > 0.62) color.lerp(dry, (patch - 0.62) * 0.55);
-        color.offsetHSL(0.003 * macro, 0.015 * micro, (micro - 0.5) * 0.045);
+        const macro = terrainTone(x * 0.024, z * 0.024, WORLD_SEED + 5);
+        const micro = terrainTone(x * 0.09, z * 0.09, WORLD_SEED + 7);
+        const patch = terrainTone(x * 0.28, z * 0.28, WORLD_SEED + 9);
+        color.copy(grass).lerp(grassDark, 0.2 + macro * 0.42 + micro * 0.18);
+        if (patch > 0.6) color.lerp(dry, (patch - 0.6) * 0.5);
+        color.offsetHSL(0, 0.01 * micro, (micro - 0.5) * 0.05);
       }
+      const campEdge = 11.5 + terrainTone(x * 0.35, z * 0.35, WORLD_SEED + 13) * 2.6;
       const campDist = Math.hypot(x, z);
-      if (campDist < 13 && y > WATER_LEVEL) {
-        const blend = Math.max(0, Math.min(1, (13 - campDist) / 6));
-        color.lerp(dirt, blend * 0.6);
+      if (campDist < campEdge && y > WATER_LEVEL) {
+        const blend = Math.max(0, Math.min(1, (campEdge - campDist) / 5.5));
+        color.lerp(dirt, blend * 0.55);
       }
       // Worn trails radiating from the homestead.
       const trail = Math.min(
@@ -192,7 +192,3 @@ function LookoutDist(x: number, z: number): number {
   return polylineDistance(x, z, LOOKOUT_PATH);
 }
 
-function pseudoNoise(x: number, z: number): number {
-  const v = Math.sin(x * 0.37 + z * 0.19) * Math.cos(x * 0.13 - z * 0.41);
-  return (v + 1) / 2;
-}

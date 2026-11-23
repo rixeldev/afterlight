@@ -18,8 +18,8 @@ export const inputState: InputState = {
   moveY: 0,
   sprint: false,
   cameraYaw: 0,
-  cameraPitch: 0.86,
-  cameraDistance: 16.5,
+  cameraPitch: 0.92,
+  cameraDistance: 17,
 };
 
 const PITCH_MIN = 0.28;

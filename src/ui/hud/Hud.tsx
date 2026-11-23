@@ -77,7 +77,7 @@ export function Hud() {
 
       {snapshot.goal && !compact ? null : null}
 
-      <ToastStack top={insets.top + 128} />
+      <ToastStack />
 
       {savePulse ? (
         <View style={[styles.savePill, { top: insets.top + 118 }]} pointerEvents="none">
@@ -151,18 +151,18 @@ function ProfileCard() {
         </AppText>
       </View>
       <View style={styles.miniRow}>
-        <Icon name="food" size={12} color={C.hunger} />
+        <Icon name="food" size={11} color={C.hunger} />
         <MeterBar value={player.hunger} color={C.hunger} height={4} style={{ flex: 1 }} />
-        <Icon name="water" size={12} color={C.thirst} />
+        <Icon name="water" size={11} color={C.thirst} />
         <MeterBar value={player.thirst} color={C.thirst} height={4} style={{ flex: 1 }} />
-      </View>
-      <View style={styles.miniRow}>
-        <Icon name="energy" size={12} color={C.stamina} />
+        <Icon name="energy" size={11} color={C.stamina} />
         <MeterBar value={player.stamina} color={C.stamina} height={4} style={{ flex: 1 }} />
-        <AppText variant="micro" color={C.textMuted}>
-          {saving ? t('hud.autosaving') : `${Math.round(player.stamina)}%`}
-        </AppText>
       </View>
+      {saving ? (
+        <AppText variant="micro" color={C.textMuted} style={{ fontSize: 8 }}>
+          {t('hud.autosaving')}
+        </AppText>
+      ) : null}
     </View>
   );
 }
@@ -179,16 +179,16 @@ function ContextCard({ onPress }: { onPress: () => void }) {
         <View style={styles.contextHeader}>
           <View style={styles.enemyDot} />
           <AppText variant="micro" color="#F0B3A4" numberOfLines={1} style={{ flex: 1 }}>
-            {t('threat.name')} · {Math.round(threat.distance)} m
-          </AppText>
-          <AppText variant="micro" color={(threat.mode === 'chase' ? C.danger : C.warning) as string}>
-            {threat.mode.toUpperCase()}
+            {t('threat.name')} · {Math.round(threat.distance)} m · {threat.mode.toUpperCase()}
           </AppText>
         </View>
-        <MeterBar value={threat.health} max={threat.maxHealth || THREAT.maxHealth} color={C.danger} height={7} style={{ marginTop: 4 }} />
-        <AppText variant="micro" color={C.textMuted} style={{ marginTop: 2 }}>
-          {Math.round(threat.health)} / {threat.maxHealth || THREAT.maxHealth}
-        </AppText>
+        <MeterBar
+          value={threat.health}
+          max={threat.maxHealth || THREAT.maxHealth}
+          color={C.danger}
+          height={6}
+          style={{ marginTop: 3 }}
+        />
       </View>
     );
   }
@@ -204,18 +204,15 @@ function ContextCard({ onPress }: { onPress: () => void }) {
     <Pressable onPress={onPress} style={styles.context} accessibilityRole="button" accessibilityLabel={t('journal.title')}>
       <View style={styles.contextHeader}>
         <View style={styles.questDot} />
-        <AppText variant="micro" color={C.accent} numberOfLines={1} style={{ flex: 1 }}>
-          {t('hud.tracked')}
+        <AppText variant="heading" numberOfLines={1} style={{ flex: 1, fontSize: 14 }}>
+          {t(step.titleKey)}
         </AppText>
         <AppText variant="micro" color={C.textMuted}>
           {done}/{total}
         </AppText>
       </View>
-      <AppText variant="heading" numberOfLines={1} style={{ fontSize: 14 }}>
-        {t(step.titleKey)}
-      </AppText>
       {next ? (
-        <AppText variant="caption" color={C.textSecondary} numberOfLines={1}>
+        <AppText variant="micro" color={C.textSecondary} numberOfLines={1}>
           {t(next.textKey)}
           {next.amount && next.amount > 1 ? ` · ${Math.min(next.amount, Math.floor(nextValue))}/${next.amount}` : ''}
         </AppText>
@@ -273,12 +270,14 @@ function RadarCluster({ onPause, onMap, compact }: { onPause: () => void; onMap:
   );
 }
 
-function ToastStack({ top }: { top: number }) {
+function ToastStack() {
   const toasts = useSession((s) => s.toasts);
-  const { width } = useWindowDimensions();
+  // Two slim pills maximum: notifications must never cover the play field.
+  const recent = toasts.slice(-2);
+  if (recent.length === 0) return null;
   return (
-    <View style={[styles.toastWrap, { top, maxWidth: Math.min(400, width * 0.5) }]} pointerEvents="none">
-      {toasts.map((toast) => (
+    <View style={styles.toastWrap} pointerEvents="none">
+      {recent.map((toast) => (
         <Toast key={toast.id} icon={toast.icon} kind={toast.kind} text={toast.text} />
       ))}
     </View>
@@ -287,11 +286,11 @@ function ToastStack({ top }: { top: number }) {
 
 function Toast({ text, icon, kind }: { text: string; icon?: string; kind: string }) {
   const opacity = useRef(new Animated.Value(0)).current;
-  const translate = useRef(new Animated.Value(-8)).current;
+  const translate = useRef(new Animated.Value(-6)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
-      Animated.timing(translate, { toValue: 0, duration: 220, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 140, useNativeDriver: true }),
+      Animated.timing(translate, { toValue: 0, duration: 160, useNativeDriver: true }),
     ]).start();
   }, [opacity, translate]);
   const color =
@@ -304,7 +303,7 @@ function Toast({ text, icon, kind }: { text: string; icon?: string; kind: string
       ]}
     >
       <Icon name={icon ?? (kind === 'story' ? 'sparkle' : kind === 'warn' ? 'alert' : 'leaf')} size={14} color={color} />
-      <AppText variant="caption" color={color} numberOfLines={2} style={{ flexShrink: 1 }}>
+      <AppText variant="micro" color={color} numberOfLines={1} style={{ flexShrink: 1 }}>
         {text}
       </AppText>
     </Animated.View>
@@ -453,17 +452,17 @@ const styles = StyleSheet.create({
   },
   fps: { position: 'absolute' },
   threatEdge: { opacity: 0.8 },
-  toastWrap: { position: 'absolute', alignSelf: 'center', gap: 5, alignItems: 'center' },
+  toastWrap: { position: 'absolute', top: '19%', alignSelf: 'center', gap: 4, alignItems: 'center' },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: R.pill,
-    backgroundColor: 'rgba(5,13,11,0.85)',
+    backgroundColor: 'rgba(5,13,11,0.82)',
     borderWidth: 1,
-    maxWidth: '100%',
+    maxWidth: 320,
   },
   coach: {
     position: 'absolute',

@@ -25,6 +25,8 @@ import { Wildlife } from './Wildlife';
 import { LakeLife } from './LakeLife';
 import { RuinProps } from './RuinProps';
 import { STRUCTURES } from '../../data/recipes';
+import { nextGoal } from '../../data/goals';
+import { POIS } from '../../data/world';
 import { AppText, Button } from '../../ui/components/Primitives';
 import { C } from '../../ui/theme';
 import { useSettings, useT } from '../../state/settingsStore';
@@ -132,7 +134,7 @@ function CameraRig() {
     }
     camera.lookAt(look.current);
     if (camera instanceof THREE.PerspectiveCamera) {
-      const wantFov = 55;
+      const wantFov = 52;
       if (Math.abs(camera.fov - wantFov) > 0.01) {
         camera.fov = wantFov;
         camera.updateProjectionMatrix();
@@ -140,6 +142,84 @@ function CameraRig() {
     }
   });
   return null;
+}
+
+/** Where the current homestead goal points, in world space. */
+function goalTarget(engine: NonNullable<ReturnType<typeof getEngine>>): { x: number; z: number } | null {
+  const next = nextGoal(engine.state);
+  if (!next) return null;
+  const id = next.goal.id;
+  const nodes = engine.nodes;
+  const nearestAlive = (kind: string) => {
+    const p = engine.state.player;
+    let best: { x: number; z: number } | null = null;
+    let bestDist = Infinity;
+    for (const node of nodes) {
+      if (node.kind !== kind) continue;
+      const st = engine.state.nodes[node.id];
+      if (st && st.charges <= 0) continue;
+      const d = Math.hypot(node.x - p.x, node.z - p.z);
+      if (d < bestDist) {
+        bestDist = d;
+        best = { x: node.x, z: node.z };
+      }
+    }
+    return best;
+  };
+  const home = { x: 1.5, z: 1.5 };
+  switch (id) {
+    case 'pickaxe':
+      return nearestAlive('rock');
+    case 'bridge':
+      return POIS.find((poi) => poi.id === 'footbridge') ?? null;
+    case 'lookout':
+      return POIS.find((poi) => poi.id === 'lookout') ?? null;
+    case 'stalker': {
+      const threat = engine.getThreat();
+      return threat ? { x: threat.x, z: threat.z } : home;
+    }
+    case 'reinforced':
+      return nearestAlive('tree') ?? home;
+    default:
+      // Build, craft, cook and level goals all resolve at the homestead.
+      return home;
+  }
+}
+
+/** Bobbing beacon above whatever the current goal points at. */
+function GoalMarker() {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    const engine = getEngine();
+    if (!engine || !ref.current) return;
+    const target = goalTarget(engine);
+    if (!target) {
+      ref.current.visible = false;
+      return;
+    }
+    const p = engine.state.player;
+    const d = Math.hypot(target.x - p.x, target.z - p.z);
+    ref.current.visible = d > 6;
+    if (!ref.current.visible) return;
+    ref.current.position.set(
+      target.x,
+      terrainHeight(target.x, target.z) + 2.15 + Math.sin(state.clock.elapsedTime * 2.6) * 0.16,
+      target.z,
+    );
+    ref.current.rotation.y = -Math.atan2(p.x - target.x, -(p.z - target.z));
+  });
+  return (
+    <group ref={ref} visible={false}>
+      <mesh rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.3, 0.62, 4]} />
+        <meshBasicMaterial color="#E8C98F" transparent opacity={0.92} depthTest={false} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.95, 0]}>
+        <ringGeometry args={[0.62, 0.8, 24]} />
+        <meshBasicMaterial color="#E8C98F" transparent opacity={0.32} depthWrite={false} />
+      </mesh>
+    </group>
+  );
 }
 
 function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
@@ -167,6 +247,7 @@ function SceneContents({ quality }: { quality: 'low' | 'medium' | 'high' }) {
       <PlayerAvatar shadows={shadows} />
       <ThreatActor shadows={shadows} />
       <ImpactFx />
+      <GoalMarker />
     </>
   );
 }
@@ -303,7 +384,7 @@ export function GameScene({ quality }: { quality: 'low' | 'medium' | 'high' }) {
           flat
           shadows={quality !== 'low'}
           gl={{ antialias: quality !== 'low' }}
-          camera={{ fov: 55, near: 0.12, far: 420, position: [0, 18, 12] }}
+          camera={{ fov: 52, near: 0.12, far: 420, position: [0, 18, 12] }}
           onCreated={({ gl, scene }) => {
             setGlReady(true);
             useSession.getState().setRendererFailed(false);
